@@ -111,37 +111,6 @@ services:
     ports:
       - "8082:8081"
 
-  # ----------------- BACKEND IA (FastAPI) -----------------
-  backend_ia:
-    build: ./backend_ia
-    container_name: backend_ia
-    hostname: backend_ia
-    ports:
-      - "9000:9000"
-    depends_on:
-      - spark-master
-      - kafka
-      - namenode
-
-  # ----------------- BACKEND NODE -----------------
-  backend_node:
-    build: ./backend_node
-    container_name: backend_node
-    hostname: backend_node
-    ports:
-      - "4000:4000"
-    depends_on:
-      - backend_ia
-
-  # ----------------- FRONTEND WEB -----------------
-  frontend:
-    build: ./frontend
-    container_name: frontend
-    hostname: frontend
-    ports:
-      - "5173:5173"
-    depends_on:
-      - backend_node
 
 volumes:
   kafka-data:
