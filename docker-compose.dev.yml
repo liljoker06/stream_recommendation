@@ -1,0 +1,49 @@
+services:
+  backend_ia:
+    build: ./backend_ia
+    container_name: backend_ia
+    working_dir: /app
+    command: sh -c "while [ ! -f /app/app.py ]; do echo ' Waiting IA code...'; sleep 2; done && uvicorn app:app --host 0.0.0.0 --reload --port 9000"
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./backend_ia:/app
+    networks:
+      - bigdata-net
+    depends_on:
+      - kafka
+      - spark-master
+
+  backend_node:
+    build: ./backend_node
+    container_name: backend_node
+    working_dir: /app
+    command: sh -c "while [ ! -f /app/package.json ]; do echo ' Waiting backend_node code...'; sleep 2; done && npm install && npm run dev"
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./backend_node:/app
+      - /app/node_modules:/app/node_modules
+    networks:
+      - bigdata-net
+    depends_on:
+      - backend_ia
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    working_dir: /app
+    command: sh -c "while [ ! -f /app/package.json ]; do echo ' Waiting frontend code...'; sleep 2; done && npm install && npm run dev -- --host 0.0.0.0"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules:/app/node_modules
+    networks:
+      - bigdata-net
+    depends_on:
+      - backend_node
+
+networks:
+  bigdata-net:
+    external: true
