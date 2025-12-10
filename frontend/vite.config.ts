@@ -6,7 +6,7 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
-    host: '0.0.0.0', // ✅ Pour écouter sur toutes les interfaces réseau du container
-    port: 5173,       // ✅ Port exposé dans Docker
+    host: '0.0.0.0', 
+    port: 5173,       
   },
 })
