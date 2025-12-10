@@ -68,7 +68,6 @@ export default function Movies() {
               duration={movie.duration}
               year={movie.year}
               genre={movie.genre}
-              onRate={handleRate}
             />
           ))}
         </div>

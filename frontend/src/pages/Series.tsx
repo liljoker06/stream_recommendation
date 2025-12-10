@@ -70,7 +70,6 @@ export default function Series() {
               seasons={series.seasons}
               year={series.year}
               genre={series.genre}
-              onRate={handleRate}
             />
           ))}
         </div>

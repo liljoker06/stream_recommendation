@@ -8,8 +8,6 @@ interface SeriesCardProps {
   seasons: number;
   year: number;
   genre: string;
-  onAddToList?: (id: number) => void;
-  onRate?: (id: number, rating: number) => void;
 }
 
 export default function SeriesCard({ 
@@ -19,19 +17,9 @@ export default function SeriesCard({
   rating, 
   seasons, 
   year, 
-  genre,
-  onAddToList,
-  onRate 
+  genre
 }: SeriesCardProps) {
   const [showDetails, setShowDetails] = useState(false);
-  const [isInList, setIsInList] = useState(false);
-
-  const handleAddToList = () => {
-    setIsInList(!isInList);
-    if (onAddToList) {
-      onAddToList(id);
-    }
-  };
 
   return (
     <div 

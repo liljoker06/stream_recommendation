@@ -9,8 +9,6 @@ interface MovieCardProps {
   duration: string;
   year: number;
   genre: string;
-  onAddToList?: (id: number) => void;
-  onRate?: (id: number, rating: number) => void;
 }
 
 export default function MovieCard({ 
@@ -20,20 +18,10 @@ export default function MovieCard({
   rating, 
   duration, 
   year, 
-  genre,
-  onAddToList,
-  onRate 
+  genre
 }: MovieCardProps) {
   const [showDetails, setShowDetails] = useState(false);
-  const [isInList, setIsInList] = useState(false);
   const navigate = useNavigate();
-
-  const handleAddToList = () => {
-    setIsInList(!isInList);
-    if (onAddToList) {
-      onAddToList(id);
-    }
-  };
 
   const handleCardClick = () => {
     navigate(`/movie/${id}`);
