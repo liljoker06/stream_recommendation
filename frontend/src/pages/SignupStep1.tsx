@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 export default function SignupStep1() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
+    name: "",
     genre: "",
     email: "",
     password: "",
@@ -48,6 +49,13 @@ export default function SignupStep1() {
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
+
+    // Nom validation
+    if (!formData.name) {
+      newErrors.name = "Le nom est requis";
+    } else if (formData.name.length < 2) {
+      newErrors.name = "Le nom doit contenir au moins 2 caractères";
+    }
 
     // Genre validation
     if (!formData.genre) {
@@ -111,9 +119,11 @@ export default function SignupStep1() {
       localStorage.setItem(
         "signupStep1Data",
         JSON.stringify({
+          name: formData.name,
           email: formData.email,
           password: formData.password,
           birthDate: formData.birthDate,
+          gender: formData.genre,
           age: calculateAge(formData.birthDate),
         })
       );
@@ -189,6 +199,32 @@ export default function SignupStep1() {
                 {errors.general}
               </div>
             )}
+
+            {/* Nom */}
+            <div>
+              <label
+                htmlFor="name"
+                className="block text-sm font-medium text-gray-300 mb-2"
+              >
+                Nom complet
+              </label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="Entrez votre nom"
+                className={`w-full px-4 py-3 bg-gray-700 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 transition-colors ${
+                  errors.name
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-gray-600 focus:ring-red-600 focus:border-transparent"
+                }`}
+              />
+              {errors.name && (
+                <p className="mt-2 text-sm text-red-400">{errors.name}</p>
+              )}
+            </div>
 
             {/* Genre */}
             <div>

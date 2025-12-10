@@ -1,13 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-
-interface Genre {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  color: string;
-}
+import { authAPI } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
+import type { Genre } from '../types';
 
 const movieGenres: Genre[] = [
   { id: 'action', name: 'Action', description: 'Cascades, combats et aventures palpitantes', icon: '💥', color: 'from-red-500 to-orange-500' },
@@ -26,6 +21,7 @@ const movieGenres: Genre[] = [
 
 export default function SignupStep2() {
   const navigate = useNavigate();
+  const { setAuthUser } = useAuth();
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [step1Data, setStep1Data] = useState<any>(null);
@@ -60,34 +56,48 @@ export default function SignupStep2() {
     setIsLoading(true);
     
     try {
-      // Simulation de l'inscription complète
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const completeUserData = {
-        ...step1Data,
+      // Préparer les données complètes pour l'inscription
+      const userData = {
+        name: step1Data.name,
+        email: step1Data.email,
+        password: step1Data.password,
+        age: step1Data.age,
+        gender: step1Data.gender,
         preferences: {
           genres: selectedGenres,
           completedAt: new Date().toISOString()
         }
       };
       
-      // Sauvegarder les données complètes (normalement envoyé au backend)
-      console.log('Inscription complète:', completeUserData);
+      // Appel API d'inscription
+      const response = await authAPI.signup(userData);
       
-      // Nettoyer le localStorage
-      localStorage.removeItem('signupStep1Data');
+      if (response.success && response.data) {
+        // Sauvegarder le token et les infos utilisateur
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        
+        // Mettre à jour le contexte d'authentification
+        setAuthUser(response.data.user);
+        
+        console.log('Inscription complète:', response.data.user);
+        
+        // Nettoyer le localStorage temporaire
+        localStorage.removeItem('signupStep1Data');
+        
+        // Rediriger vers la page d'accueil avec un message de bienvenue
+        navigate('/', { 
+          state: { 
+            newUser: true, 
+            message: 'Bienvenue ! Votre compte a été créé avec succès.' 
+          }
+        });
+      }
       
-      // Rediriger vers la page d'accueil avec un message de bienvenue
-      navigate('/', { 
-        state: { 
-          newUser: true, 
-          message: 'Bienvenue ! Votre compte a été créé avec succès.' 
-        }
-      });
-      
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur inscription étape 2:', error);
-      alert('Une erreur est survenue lors de la création de votre compte.');
+      const errorMessage = error.response?.data?.message || 'Une erreur est survenue lors de la création de votre compte.';
+      alert(errorMessage);
     } finally {
       setIsLoading(false);
     }
