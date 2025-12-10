@@ -14,7 +14,7 @@ export default function Navbar() {
 
   return (
     <nav 
-      className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+      className={`fixed top-0 w-full z-50 bg-black transition-all duration-300 ${
         isScrolled 
           ? 'bg-netflix-black' 
           : 'bg-gradient-to-b from-netflix-black/80 to-transparent'
