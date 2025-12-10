@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import type { Movie } from "../types/Movie";
+import Recommandation from "../components/Recommandation";
 
 export default function MovieDetails() {
   const { id } = useParams<{ id: string }>();
@@ -167,10 +168,7 @@ export default function MovieDetails() {
       {/* Trailer section */}
       <div className="container mx-auto px-4 pb-12">
         <h2 className="text-3xl font-bold mb-6">Bande-annonce</h2>
-        <div
-          className="relative w-255 bg-black rounded-lg overflow-hidden shadow-2xl"
-          style={{ paddingBottom: "35%", maxWidth: "1100px", margin: "0 auto" }}
-        >
+        <div className="relative w-full bg-black rounded-lg overflow-hidden shadow-2xl" style={{ paddingBottom: "56.25%" }}>
           <iframe
             className="absolute top-0 left-0 w-full h-full"
             src="https://www.youtube.com/embed/dQw4w9WgXcQ"
@@ -184,19 +182,19 @@ export default function MovieDetails() {
       {/* FILM section */}
       <div className="container mx-auto px-4 pb-12">
         <h2 className="text-3xl font-bold mb-6">Voir le film</h2>
-        <div
-          className="relative w-255 bg-black rounded-lg overflow-hidden shadow-2xl"
-          style={{ paddingBottom: "35%", maxWidth: "1100px", margin: "0 auto" }}
-        >
+        <div className="relative w-full bg-black rounded-lg overflow-hidden shadow-2xl" style={{ paddingBottom: "56.25%" }}>
           <iframe
             className="absolute top-0 left-0 w-full h-full"
-            src="https://ups2up.fun/embed-23mqk2tfbucx.html"
+            src="https://uqload.bz/q108xqqe2okl.html"
             title="Trailer"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
           />
         </div>
       </div>
+
+      {/* Section Recommandations */}
+      <Recommandation currentMovieId={movie.id} type="movie" />
     </div>
   );
 }
