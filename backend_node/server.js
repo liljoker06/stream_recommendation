@@ -56,3 +56,12 @@ app.use((req, res) => {
     message: 'Route non trouvée' 
   });
 });
+
+//==Démarrage du serveur==
+app.listen(PORT, () => {
+  console.log(`Serveur Node.js démarré sur le port ${PORT}`);
+  console.log(`test check: http://localhost:${PORT}/health`);
+  console.log(`db check: http://localhost:${PORT}/health/db`);
+  console.log(`Auth routes: http://localhost:${PORT}/api/auth`);
+  console.log(`Content routes: http://localhost:${PORT}/api/contents`);
+});
