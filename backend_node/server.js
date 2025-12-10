@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
+import contentRoutes from './routes/contents.js';
 import pool from './config/database.js';
 
 dotenv.config();
@@ -9,9 +10,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// ==========================================
-//  MIDDLEWARES
-// ==========================================
+//== Middlewares ==
 app.use(cors({
   origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   credentials: true
@@ -20,9 +19,7 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ==========================================
-//  ROUTES
-// ==========================================
+//==Routes test
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
@@ -49,25 +46,13 @@ app.get('/health/db', async (req, res) => {
   }
 });
 
-// Routes d'authentification
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRoutes); // route auth
+app.use('/api/contents', contentRoutes); // route contenus
 
-// ==========================================
-//  GESTION DES ERREURS 404
-// ==========================================
+//==Erreur 404++
 app.use((req, res) => {
   res.status(404).json({ 
     success: false, 
     message: 'Route non trouvée' 
   });
-});
-
-// ==========================================
-//  DÉMARRAGE DU SERVEUR
-// ==========================================
-app.listen(PORT, () => {
-  console.log(`🚀 Serveur Node.js démarré sur le port ${PORT}`);
-  console.log(`📍 Health check: http://localhost:${PORT}/health`);
-  console.log(`📍 Database check: http://localhost:${PORT}/health/db`);
-  console.log(`🔐 Auth routes: http://localhost:${PORT}/api/auth`);
 });
