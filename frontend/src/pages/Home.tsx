@@ -18,10 +18,10 @@ export default function Home() {
               <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
                 Vos recommandations personnalisées
               </h1>
-              <p className="text-xl md:text-2xl text-netflix-gray mb-8 leading-relaxed">
+              <p className="text-xl md:text-2xl text-gray-200 mb-8 leading-relaxed">
                 Découvrez des films et séries sélectionnés spécialement pour vous grâce à notre système de recommandation intelligent.
               </p>
-              <p className="text-lg text-white mb-10">
+              <p className="text-lg text-gray-100 mb-10">
                 Explorez notre catalogue, ajoutez vos favoris à votre liste et profitez de suggestions personnalisées basées sur vos préférences.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
@@ -56,7 +56,7 @@ export default function Home() {
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
               Comment ça marche ?
             </h2>
-            <p className="text-xl text-netflix-gray max-w-3xl mx-auto">
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
               Notre système de recommandation analyse vos préférences pour vous proposer le meilleur contenu
             </p>
           </div>
@@ -68,7 +68,7 @@ export default function Home() {
                 <span className="text-3xl font-bold text-white">1</span>
               </div>
               <h3 className="text-2xl font-bold text-white mb-4">Parcourez</h3>
-              <p className="text-netflix-gray text-lg">
+              <p className="text-gray-300 text-lg">
                 Explorez notre catalogue de films et séries avec des informations détaillées : notes, durée, genre, année de sortie.
               </p>
             </div>
@@ -79,7 +79,7 @@ export default function Home() {
                 <span className="text-3xl font-bold text-white">2</span>
               </div>
               <h3 className="text-2xl font-bold text-white mb-4">Ajoutez à votre liste</h3>
-              <p className="text-netflix-gray text-lg">
+              <p className="text-gray-300 text-lg">
                 Créez votre liste personnalisée en ajoutant les films et séries qui vous intéressent pour les retrouver facilement.
               </p>
             </div>
@@ -90,7 +90,7 @@ export default function Home() {
                 <span className="text-3xl font-bold text-white">3</span>
               </div>
               <h3 className="text-2xl font-bold text-white mb-4">Recevez des recommandations</h3>
-              <p className="text-netflix-gray text-lg">
+              <p className="text-gray-300 text-lg">
                 Notre IA vous propose des suggestions personnalisées basées sur vos goûts et vos préférences de genre.
               </p>
             </div>
@@ -119,7 +119,7 @@ export default function Home() {
               />
               <div className="relative z-10 h-full flex flex-col justify-end p-8">
                 <h3 className="text-4xl font-bold text-white mb-3">Films</h3>
-                <p className="text-lg text-netflix-gray mb-4">
+                <p className="text-lg text-gray-200 mb-4">
                   Des milliers de films recommandés selon vos goûts
                 </p>
                 <div className="flex items-center text-netflix-red font-semibold">
@@ -144,7 +144,7 @@ export default function Home() {
               />
               <div className="relative z-10 h-full flex flex-col justify-end p-8">
                 <h3 className="text-4xl font-bold text-white mb-3">Séries</h3>
-                <p className="text-lg text-netflix-gray mb-4">
+                <p className="text-lg text-gray-200 mb-4">
                   Des séries captivantes sélectionnées pour vous
                 </p>
                 <div className="flex items-center text-netflix-red font-semibold">
@@ -166,27 +166,27 @@ export default function Home() {
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
               Pourquoi nous choisir ?
             </h2>
-            <p className="text-xl text-netflix-gray max-w-2xl mx-auto">
+            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
               Des milliers d'utilisateurs font confiance à notre plateforme de recommandation
             </p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div className="bg-netflix-dark p-6 rounded-lg">
+            <div className="bg-netflix-dark p-6 rounded-lg border border-netflix-gray">
               <div className="text-5xl font-bold text-netflix-red mb-2">15K+</div>
-              <div className="text-netflix-gray text-lg">Films disponibles</div>
+              <div className="text-gray-300 text-lg">Films disponibles</div>
             </div>
-            <div className="bg-netflix-dark p-6 rounded-lg">
+            <div className="bg-netflix-dark p-6 rounded-lg border border-netflix-gray">
               <div className="text-5xl font-bold text-netflix-red mb-2">8K+</div>
-              <div className="text-netflix-gray text-lg">Séries disponibles</div>
+              <div className="text-gray-300 text-lg">Séries disponibles</div>
             </div>
-            <div className="bg-netflix-dark p-6 rounded-lg">
+            <div className="bg-netflix-dark p-6 rounded-lg border border-netflix-gray">
               <div className="text-5xl font-bold text-netflix-red mb-2">95%</div>
-              <div className="text-netflix-gray text-lg">Précision des recommandations</div>
+              <div className="text-gray-300 text-lg">Précision des recommandations</div>
             </div>
-            <div className="bg-netflix-dark p-6 rounded-lg">
+            <div className="bg-netflix-dark p-6 rounded-lg border border-netflix-gray">
               <div className="text-5xl font-bold text-netflix-red mb-2">50K+</div>
-              <div className="text-netflix-gray text-lg">Utilisateurs actifs</div>
+              <div className="text-gray-300 text-lg">Utilisateurs actifs</div>
             </div>
           </div>
         </div>
@@ -198,7 +198,7 @@ export default function Home() {
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
             Prêt à découvrir votre prochain favori ?
           </h2>
-          <p className="text-xl text-netflix-gray mb-10">
+          <p className="text-xl text-gray-300 mb-10">
             Commencez dès maintenant à explorer nos recommandations personnalisées
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
