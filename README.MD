@@ -1,33 +1,32 @@
 # 🚀 Stream Recommendation Platform — Guide de Lancement
 
-## 📌 Architecture de lancement
+## ⚙️ Architecture de Lancement
 
-⚠️ Le projet utilise **DEUX `docker-compose` séparés** :
+> Le projet utilise **deux orchestrations distinctes** :
 
-| Fichier                  | Stack    | Conteneurs                           | Rôle                          |
-| ------------------------ | -------- | ------------------------------------ | ----------------------------- |
-| `docker-compose.yml`     | Big Data | Hadoop + Kafka + Spark + Kafka UI    | Infrastructure Data Streaming |
-| `docker-compose.dev.yml` | Dev App  | Backend IA + Backend Node + Frontend | Application & UI              |
+| Fichier                  | Stack           | Conteneurs                         | Rôle                                             |
+| ------------------------ | --------------- | ---------------------------------- | ------------------------------------------------ |
+| `docker-compose.yml`     | Big Data Layer  | Hadoop, Kafka, Spark, Kafka UI     | Infrastructure de streaming et distribution data |
+| `docker-compose.dev.yml` | App & Dev Layer | Backend IA, Backend Node, Frontend | Environnement applicatif (API + UI)              |
 
-Chaque bloc doit être lancé **séparément**.
+Chaque stack doit être lancée **séparément**, afin d'assurer stabilité et contrôle d'exécution.
 
 ---
 
-## 🚀 1. Lancer l'infrastructure Big Data
+## 🗂️ 1. Démarrage de l'Infrastructure Big Data
 
 ```bash
-cd stream_recommendation
-
 docker compose up -d
 ```
 
-### ✔️ Conteneurs démarrés
+### 🔍 Services Lancés
 
-* Hadoop Namenode / Datanodes / ResourceManager / NodeManager
+* Hadoop Namenode / Datanodes
+* Hadoop ResourceManager & NodeManager
 * Spark Master & Worker
-* Kafka + Kafka UI
+* Kafka & Kafka UI
 
-### 🔍 Accès UI
+### 🌐 Interfaces d'Administration
 
 | Service         | URL                                            |
 | --------------- | ---------------------------------------------- |
@@ -38,37 +37,50 @@ docker compose up -d
 
 ---
 
-## 💻 2. Lancer l'environnement Dev (Back & Front)
+## 💻 2. Démarrage de l'Environnement de Développement Applicatif
+
+### 📌 Pré-requis avant lancement (obligatoire)
+
+Avant de démarrer Docker, installez les dépendances en local pour éviter les erreurs `MODULE_NOT_FOUND` et permettre l’auto-complétion IDE :
+
+```bash
+cd backend_node && npm install
+cd ../frontend && npm install
+```
+
+> ⚠️ Ne pas lancer `npm run dev` en local → Docker s’en charge.
 
 ```bash
 docker compose -f docker-compose.dev.yml up -d
 ```
 
-### ✔️ Conteneurs démarrés
+### 🔥 Stack Dev Active
 
-* `backend_ia` (FastAPI)
-* `backend_node` (Node.js + Express)
-* `frontend` (React + Vite)
+| Service        | Port | Description                                   |
+| -------------- | ---- | --------------------------------------------- |
+| `backend_ia`   | 9000 | API FastAPI + Uvicorn (Documentation `/docs`) |
+| `backend_node` | 4000 | API Node.js (Hot reload)                      |
+| `frontend`     | 5173 | Interface React + Vite (Auto-reload)          |
 
-### 🌐 URLs d'accès
+### 🌍 URLs d'Accès
 
-| Service      | URL                                                      |
+| Cible        | URL                                                      |
 | ------------ | -------------------------------------------------------- |
-| API IA       | [http://localhost:9000/docs](http://localhost:9000/docs) |
+| API IA Docs  | [http://localhost:9000/docs](http://localhost:9000/docs) |
 | Backend Node | [http://localhost:4000](http://localhost:4000)           |
-| Frontend     | [http://localhost:5173](http://localhost:5173)           |
+| Frontend UI  | [http://localhost:5173](http://localhost:5173)           |
 
 ---
 
-## 🛑 Arrêter l'environnement
+## 🛑 Arrêt des Éléments
 
-### Stopper uniquement l'app
+### ⛔ Arrêt uniquement de l'App Layer
 
 ```bash
 docker compose -f docker-compose.dev.yml down
 ```
 
-### Stopper toute l'infra (Big Data + App)
+### 🔴 Arrêt complet (Infrastructure + Application)
 
 ```bash
 docker compose down --remove-orphans
@@ -76,13 +88,15 @@ docker compose down --remove-orphans
 
 ---
 
-## 🔄 Rebuild (si modification Dockerfile ou deps)
+## 🔄 Rebuild Complet (si modification Dockerfile ou dépendances)
+
+### Dev Layer uniquement
 
 ```bash
 docker compose -f docker-compose.dev.yml up -d --build
 ```
 
-Pour la stack Big Data :
+### Big Data Layer
 
 ```bash
 docker compose up -d --build
@@ -90,27 +104,46 @@ docker compose up -d --build
 
 ---
 
-## 📦 Volumes internes
+## 📦 Gestion des Volumes Internes
 
-| Volume               | Utilité                                  |
-| -------------------- | ---------------------------------------- |
-| `node-modules-back`  | dépendances backend Node isolées Docker  |
-| `node-modules-front` | dépendances frontend Vite isolées Docker |
-| `ia-pyc`             | cache python                             |
+| Volume               | Rôle                                            |
+| -------------------- | ----------------------------------------------- |
+| `node-modules-back`  | Dépendances backend Node isolées (pas en local) |
+| `node-modules-front` | Dépendances frontend Vite isolées               |
+| `ia-pyc`             | Cache Python géré par Docker                    |
 
----
-
-## 🧠 Notes importantes
-
-* Le code est synchronisé en **temps réel** via les volumes
-* Node_modules et pycache sont **isolés en volumes Docker** → pas de pollutions locales
-* Les devs peuvent coder **sans rebuild**, seulement `docker compose up -d`
+➡️ Avantage : aucun `node_modules` ou `__pycache__` ne pollue votre arborescence locale.
 
 ---
 
-## 🎯 Résultat
+## 🧠 Mode Développement — Notes Importantes
 
-Tu développes ton frontend, backend Node & backend IA **en live**, pendant que Kafka, Spark et Hadoop tournent indépendamment.
+* Les sources `backend_node`, `backend_ia` et `frontend` sont montées en **volumes live-sync**.
+* **Hot reload** automatique via `nodemon`, `uvicorn --reload`, `vite`.
+* Le `build` n'est requis **que si vous modifiez un Dockerfile** ou des dépendances majeures.
 
-🧩 L’équipe peut avancer sans toucher à l’infra.
+✔️ **Tu codes, tu sauvegardes → tout se met à jour en live.**
+
+---
+
+## 🎯 Résultat Final
+
+Grâce à cette double orchestration maîtrisée :
+
+* L’infrastructure Big Data tourne indépendamment et en continu.
+* L’application (API + UI) reste agile, modulaire et instantanément éditable.
+
+✨ La plateforme combine robustesse data (Kafka/Spark/Hadoop) et flexibilité dev (React/FastAPI/Node).
+
+---
+
+## 📌 Prochaines Étapes (Roadmap Designée)
+
+* Dashboard d’observabilité (Grafana, Prometheus)
+* Scaling Spark Workers & Kafka partitions
+
+---
+
+🎉 **Bon développement et expérimentation streaming !**
+
 
