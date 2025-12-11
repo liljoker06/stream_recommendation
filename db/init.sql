@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) UNIQUE,
     age INT,
     gender VARCHAR(50),
+    password VARCHAR(255) NOT NULL,
     preferences JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -22,6 +23,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- =========================
 CREATE TABLE IF NOT EXISTS contents (
     content_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tmdb_id BIGINT UNIQUE,                      -- 🔥 Nouveau
     title VARCHAR(255) NOT NULL,
     description TEXT,
     type VARCHAR(100),
@@ -30,7 +32,7 @@ CREATE TABLE IF NOT EXISTS contents (
     duration INT,
     creator_id VARCHAR(255),
     upload_date DATE,
-    language VARCHAR(50),
+    language VARCHAR(255),
     popularity_score DOUBLE PRECISION DEFAULT 0,
     metadata JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
