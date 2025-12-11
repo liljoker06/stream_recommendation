@@ -23,8 +23,13 @@ export interface Content {
   duration: number;
   metadata: {
     poster_url: string;
-    year: number;
-    rating: number;
+    backdrop_url: string;
+    vote_average: number;
+    budget: number;
+    revenue: number;
+    tmdb_id: number;
+    homepage: string;
+    raw_genres: string;
   };
 }
 
@@ -42,8 +47,13 @@ export interface ContentDetail {
   popularity_score: number;
   metadata: {
     poster_url: string;
-    year: number;
-    rating: number;
+    backdrop_url: string;
+    vote_average: number;
+    budget: number;
+    revenue: number;
+    tmdb_id: number;
+    homepage: string;
+    raw_genres: string;
   };
   trailer_url?: string;
   thumbnail_url?: string;

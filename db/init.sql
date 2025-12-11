@@ -14,7 +14,6 @@ CREATE TABLE IF NOT EXISTS users (
     password VARCHAR(255) NOT NULL,
     age INT,
     gender VARCHAR(50),
-    password VARCHAR(255) NOT NULL,
     preferences JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

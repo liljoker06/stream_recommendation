@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { contentAPI } from "../services/api";
 import Recommandation from "../components/Recommandation";
 import type { ContentDetail } from "../types/index";
+import { extractGenres } from "../utils/genres";
 
 export default function MovieDetails() {
   const { id } = useParams<{ id: string }>();
@@ -90,21 +91,21 @@ export default function MovieDetails() {
             <h1 className="text-5xl font-bold mb-4">{movie.title}</h1>
             <div className="flex items-center gap-4 text-lg mb-4">
               <span className="text-netflix-red font-bold">
-                ⭐ {movie.metadata.rating.toFixed(1)}/10
+                ⭐ {movie.metadata.vote_average.toFixed(1)}/10
               </span>
-              <span>{movie.metadata.year}</span>
+              <span>{new Date(movie.upload_date).getFullYear()}</span>
               <span>{formatDuration(movie.duration)}</span>
               <span className="px-3 py-1 bg-netflix-red rounded text-sm">
                 {movie.language.toUpperCase()}
               </span>
             </div>
             <div className="flex gap-2 mb-4">
-              {movie.tags.split(",").map((tag, index) => (
+              {extractGenres(movie.tags).map((tag, index) => (
                 <span
                   key={index}
                   className="px-3 py-1 bg-netflix-gray rounded-full text-sm"
                 >
-                  {tag.trim()}
+                  {tag}
                 </span>
               ))}
             </div>

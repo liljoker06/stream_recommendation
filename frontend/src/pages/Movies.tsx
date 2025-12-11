@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import MovieCard from '../components/MovieCard';
 import { contentAPI } from '../services/api';
 import type { Content } from '../types/index';
+import { filterValidCategories } from '../utils/genres';
 
 
 export default function Movies() {
@@ -23,7 +24,8 @@ export default function Movies() {
     try {
       const response = await contentAPI.getCategories('movie');
       if (response.success) {
-        setCategories(response.data);
+        const validCategories = filterValidCategories(response.data);
+        setCategories(validCategories);
       }
     } catch (err) {
       console.error('Erreur chargement catégories:', err);
@@ -126,9 +128,9 @@ export default function Movies() {
                 id={movie.content_id}
                 title={movie.title}
                 image={movie.metadata.poster_url}
-                rating={movie.metadata.rating}
+                rating={movie.metadata.vote_average}
                 duration={formatDuration(movie.duration)}
-                year={movie.metadata.year}
+                year={new Date().getFullYear()}
                 genre={movie.category}
               />
             ))}
