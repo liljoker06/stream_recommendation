@@ -1,15 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-interface MovieCardProps {
-  id: number;
-  title: string;
-  image: string;
-  rating: number;
-  duration: string;
-  year: number;
-  genre: string;
-}
+import type { MovieCardProps } from '../types/Movie';
 
 export default function MovieCard({ 
   id, 
