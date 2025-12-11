@@ -175,20 +175,6 @@ services:
     networks:
       - bigdata-net
 
-
-  hbase-init:
-    image: harisekhon/hbase:latest
-    container_name: hbase-init
-    hostname: hbase-init
-    depends_on:
-      - hbase-master
-      - zookeeper-hb
-    volumes:
-      - ./hbase-init:/hbase-init
-    entrypoint: ["bash", "/hbase-init/init-hbase.sh"]
-    networks:
-      - bigdata-net
-
   # ----------------- POSTGRES -----------------
   postgres:
     image: postgres:15

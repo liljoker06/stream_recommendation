@@ -1,15 +1,51 @@
 # 🚀 Stream Recommendation Platform — Guide de Lancement
 
+### 🧩 Architecture Globale du Projet
+
+Voici une vue simplifiée de l'architecture complète :
+
+```
+             Frontend Web / Mobile
+                      │
+            ┌─────────┴──────────┐
+            │                    │
+        Backend Node         Backend IA
+            │                    │
+       PostgreSQL           HBase (hot data)
+            │                    │
+            └──────────┬─────────┘
+                       │
+                     Spark
+                       │
+                   Kafka Streams
+                       │
+                    Hadoop (HDFS)
+                  (storage long terme)
+```
+
+### 📝 Explication
+
+* **Frontend (Web / Mobile)** : Interface utilisée par les utilisateurs.
+* **Backend Node.js** : Gère les utilisateurs, contenus, authentification, stockés dans PostgreSQL.
+* **Backend IA (FastAPI)** : Génère les recommandations et utilise HBase pour lire les interactions massives.
+* **PostgreSQL** : Base structurée (users, contenus, métadonnées). Tables créées automatiquement.
+* **HBase** : Base distribuée pour interactions, sessions et recommandations. Tables créées **manuellement**.
+* **Kafka Streams** : Ingestion en temps réel des événements.
+* **Spark** : Traitement batch + streaming et préparation des données.
+* **Hadoop HDFS** : Archivage long terme des données volumineuses.
+
+— Guide de Lancement
+
 ## ⚙️ Architecture de Lancement
 
 > Le projet utilise **deux orchestrations distinctes** :
 
-| Fichier                  | Stack           | Conteneurs                         | Rôle                                             |
-| ------------------------ | --------------- | ---------------------------------- | ------------------------------------------------ |
-| `docker-compose.yml`     | Big Data Layer  | Hadoop, Kafka, Spark, Kafka UI     | Infrastructure de streaming et distribution data |
-| `docker-compose.dev.yml` | App & Dev Layer | Backend IA, Backend Node, Frontend | Environnement applicatif (API + UI)              |
+| Fichier                  | Stack           | Conteneurs                            | Rôle                                         |
+| ------------------------ | --------------- | ------------------------------------- | -------------------------------------------- |
+| `docker-compose.yml`     | Big Data Layer  | Hadoop, Kafka, Spark, Kafka UI, HBase | Infrastructure streaming & storage distribué |
+| `docker-compose.dev.yml` | App & Dev Layer | Backend IA, Backend Node, Frontend    | Environnement applicatif (API + UI)          |
 
-Chaque stack doit être lancée **séparément**, afin d'assurer stabilité et contrôle d'exécution.
+Chaque stack doit être lancée **séparément**, pour un contrôle clair et une meilleure stabilité.
 
 ---
 
@@ -25,62 +61,131 @@ docker compose up -d
 * Hadoop ResourceManager & NodeManager
 * Spark Master & Worker
 * Kafka & Kafka UI
+* **HBase (Master + RegionServer)**
 
 ### 🌐 Interfaces d'Administration
 
-| Service         | URL                                            |
-| --------------- | ---------------------------------------------- |
-| Namenode        | [http://localhost:9870](http://localhost:9870) |
-| ResourceManager | [http://localhost:8088](http://localhost:8088) |
-| Spark Master UI | [http://localhost:8080](http://localhost:8080) |
-| Kafka UI        | [http://localhost:8081](http://localhost:8081) |
+| Service         | URL                                              |
+| --------------- | ------------------------------------------------ |
+| Namenode        | [http://localhost:9870](http://localhost:9870)   |
+| ResourceManager | [http://localhost:8088](http://localhost:8088)   |
+| Spark Master UI | [http://localhost:8080](http://localhost:8080)   |
+| Kafka UI        | [http://localhost:8081](http://localhost:8081)   |
+| HBase Master UI | [http://localhost:16010](http://localhost:16010) |
 
 ---
 
-## 💻 2. Démarrage de l'Environnement de Développement Applicatif
+## 🗄️ 2. Initialisation des Bases de Données
 
-### 📌 Pré-requis avant lancement (obligatoire)
+### ✅ PostgreSQL — Automatique
 
-Avant de démarrer Docker, installez les dépendances en local pour éviter les erreurs `MODULE_NOT_FOUND` et permettre l’auto-complétion IDE :
+La base Postgres est initialisée **automatiquement** via le fichier :
+
+```
+/db/init.sql
+```
+
+Ce script crée par défaut :
+
+* `users`
+* `contents`
+* `trailers`
+* `streaming_links`
+
+Aucune manipulation supplémentaire n'est requise.
+
+---
+
+## 🏗️ HBase — Initialisation Manuelle
+
+HBase **ne supporte pas l'initialisation automatique via Docker Entrypoint**, il faut donc créer les tables **manuellement** lors de la première installation.
+
+### 👉 Étapes pour créer les tables HBase
+
+#### 1. Ouvrir un terminal dans HBase Master
+
+```bash
+docker exec -it hbase-master bash
+```
+
+#### 2. Ouvrir le shell HBase
+
+```bash
+hbase shell
+```
+
+#### 3. Créer les tables nécessaires
+
+```hbase
+create 'interactions', 'data'
+create 'recommendations', 'data'
+create 'sessions', 'data'
+```
+
+#### 4. Vérifier la création des tables
+
+```hbase
+list
+```
+
+Résultat attendu :
+
+```
+TABLE
+interactions
+recommendations
+sessions
+3 row(s)
+```
+
+✔️ Ces tables seront utilisées par Spark Streaming pour stocker les événements et recommandations.
+
+---
+
+## 💻 3. Lancement de l'Environnement Applicatif
+
+### 📌 Pré-requis locaux (obligatoire)
+
+Avant de lancer Docker, installez les dépendances en local :
 
 ```bash
 cd backend_node && npm install
 cd ../frontend && npm install
 ```
 
-> ⚠️ Ne pas lancer `npm run dev` en local → Docker s’en charge.
+> ⚠️ Ne pas exécuter `npm run dev` manuellement — Docker s'en charge.
+
+### ▶️ Lancement
 
 ```bash
 docker compose -f docker-compose.dev.yml up -d
 ```
 
-### 🔥 Stack Dev Active
+### 🔥 Services Dev Lancés
 
-| Service        | Port | Description                                   |
-| -------------- | ---- | --------------------------------------------- |
-| `backend_ia`   | 9000 | API FastAPI + Uvicorn (Documentation `/docs`) |
-| `backend_node` | 4000 | API Node.js (Hot reload)                      |
-| `frontend`     | 5173 | Interface React + Vite (Auto-reload)          |
+| Service      | Port | Description                |
+| ------------ | ---- | -------------------------- |
+| backend_ia   | 9000 | API FastAPI (`/docs`)      |
+| backend_node | 4000 | API Node.js (hot reload)   |
+| frontend     | 5173 | React + Vite (auto-reload) |
 
-### 🌍 URLs d'Accès
+### 🌍 URLs
 
-| Cible        | URL                                                      |
-| ------------ | -------------------------------------------------------- |
-| API IA Docs  | [http://localhost:9000/docs](http://localhost:9000/docs) |
-| Backend Node | [http://localhost:4000](http://localhost:4000)           |
-| Frontend UI  | [http://localhost:5173](http://localhost:5173)           |
+* API IA : [http://localhost:9000/docs](http://localhost:9000/docs)
+* Backend Node : [http://localhost:4000](http://localhost:4000)
+* Frontend : [http://localhost:5173](http://localhost:5173)
 
 ---
 
 ## 🛑 Arrêt des Éléments
 
-### ⛔ Arrêt uniquement de l'App Layer
+### ⛔ App Layer uniquement
 
 ```bash
 docker compose -f docker-compose.dev.yml down
 ```
 
-### 🔴 Arrêt complet (Infrastructure + Application)
+### 🔴 Full Shutdown (Big Data + App)
 
 ```bash
 docker compose down --remove-orphans
@@ -88,9 +193,9 @@ docker compose down --remove-orphans
 
 ---
 
-## 🔄 Rebuild Complet (si modification Dockerfile ou dépendances)
+## 🔄 Rebuild Complet
 
-### Dev Layer uniquement
+### Dev Layer
 
 ```bash
 docker compose -f docker-compose.dev.yml up -d --build
@@ -104,46 +209,42 @@ docker compose up -d --build
 
 ---
 
-## 📦 Gestion des Volumes Internes
+## 📦 Volumes Docker Utilisés
 
-| Volume               | Rôle                                            |
-| -------------------- | ----------------------------------------------- |
-| `node-modules-back`  | Dépendances backend Node isolées (pas en local) |
-| `node-modules-front` | Dépendances frontend Vite isolées               |
-| `ia-pyc`             | Cache Python géré par Docker                    |
-
-➡️ Avantage : aucun `node_modules` ou `__pycache__` ne pollue votre arborescence locale.
+| Volume             | Rôle                     |
+| ------------------ | ------------------------ |
+| node-modules-back  | Dépendances Node backend |
+| node-modules-front | Dépendances frontend     |
+| ia-pyc             | Cache Python             |
+| pgdata             | Persistante PostgreSQL   |
+| kafka-data         | Stockage Kafka           |
 
 ---
 
-## 🧠 Mode Développement — Notes Importantes
+## 🧠 Notes Développeur
 
-* Les sources `backend_node`, `backend_ia` et `frontend` sont montées en **volumes live-sync**.
-* **Hot reload** automatique via `nodemon`, `uvicorn --reload`, `vite`.
-* Le `build` n'est requis **que si vous modifiez un Dockerfile** ou des dépendances majeures.
-
-✔️ **Tu codes, tu sauvegardes → tout se met à jour en live.**
+* Hot reload activé partout (Node, FastAPI, React)
+* Pas de `node_modules` local → environnement propre
+* Rebuild uniquement si Dockerfile modifié
 
 ---
 
 ## 🎯 Résultat Final
 
-Grâce à cette double orchestration maîtrisée :
+L’architecture permet :
 
-* L’infrastructure Big Data tourne indépendamment et en continu.
-* L’application (API + UI) reste agile, modulaire et instantanément éditable.
-
-✨ La plateforme combine robustesse data (Kafka/Spark/Hadoop) et flexibilité dev (React/FastAPI/Node).
-
----
-
-## 📌 Prochaines Étapes (Roadmap Designée)
-
-* Dashboard d’observabilité (Grafana, Prometheus)
-* Scaling Spark Workers & Kafka partitions
+* Une **infrastructure Big Data robuste** (Kafka / Spark / Hadoop / HBase)
+* Une **stack applicative flexible** (React / Node / FastAPI)
+* Un développement fluide avec rechargement à chaud
 
 ---
 
-🎉 **Bon développement et expérimentation streaming !**
+## 📌 Prochaines Étapes
 
+* Ajout de Grafana / Prometheus
+* Scaling automatique Spark Workers
+* Monitoring Kafka + HBase
 
+---
+
+✨ Bon développement sur votre plateforme de recommandation en streaming ! 🚀
