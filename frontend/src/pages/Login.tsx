@@ -1,7 +1,11 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { authAPI } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Login() {
+  const navigate = useNavigate();
+  const { setAuthUser, isAuthenticated, isLoading: authLoading } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -9,6 +13,13 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{[key: string]: string}>({});
+
+  // redirg si déjà connecté
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, authLoading, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -52,16 +63,30 @@ export default function Login() {
     setIsLoading(true);
     
     try {
-      // Simulation de l'appel API
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Appel API de connexion
+      const response = await authAPI.login({
+        email: formData.email,
+        password: formData.password
+      });
+
+      if (response.success && response.data) {
+        // Sauvegarder le token et les infos utilisateur
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        
+        // Mettre à jour le contexte d'authentification
+        setAuthUser(response.data.user);
+        
+        console.log('Connexion réussie:', response.data.user);
+        
+        // Redirection vers la page d'accueil
+        navigate('/');
+      }
       
-      // Redirection vers la page d'accueil après connexion réussie
-      console.log('Connexion réussie:', formData);
-      // TODO: Implémenter la logique de connexion réelle
-      
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur de connexion:', error);
-      setErrors({ general: 'Email ou mot de passe incorrect' });
+      const errorMessage = error.response?.data?.message || 'Email ou mot de passe incorrect';
+      setErrors({ general: errorMessage });
     } finally {
       setIsLoading(false);
     }

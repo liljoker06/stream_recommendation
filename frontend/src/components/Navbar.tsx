@@ -72,14 +72,6 @@ export default function Navbar() {
                 {showUserMenu && (
                   <div className="absolute right-0 mt-2 w-48 bg-netflix-black border border-netflix-gray shadow-2xl">
                     <div className="py-1">
-                      <Link
-                        to="/profile"
-                        className="block px-4 py-2 text-sm text-netflix-white hover:bg-netflix-gray transition-colors"
-                        onClick={() => setShowUserMenu(false)}
-                      >
-                        Compte
-                      </Link>
-                      <div className="border-t border-netflix-gray mt-1">
                         <button
                           onClick={() => {
                             logout();
@@ -87,9 +79,8 @@ export default function Navbar() {
                           }}
                           className="block w-full text-left px-4 py-2 text-sm text-netflix-white hover:bg-netflix-gray transition-colors"
                         >
-                          Se déconnecter de ReCommend
+                          Se déconnecter
                         </button>
-                      </div>
                     </div>
                   </div>
                 )}
@@ -156,13 +147,6 @@ export default function Navbar() {
               {/* Actions utilisateur mobile */}
               {isAuthenticated ? (
                 <div className="border-t border-netflix-gray pt-2 mt-2">
-                  <Link 
-                    to="/profile" 
-                    className="block px-6 py-3 text-sm text-netflix-white hover:bg-netflix-gray transition-colors"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Compte
-                  </Link>
                   <button
                     onClick={() => {
                       logout();
@@ -170,7 +154,7 @@ export default function Navbar() {
                     }}
                     className="block w-full text-left px-6 py-3 text-sm text-netflix-white hover:bg-netflix-gray transition-colors"
                   >
-                    Se déconnecter de ReCommend
+                    Se déconnecter
                   </button>
                 </div>
               ) : (

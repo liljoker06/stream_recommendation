@@ -19,7 +19,7 @@ const seriesData = [
 export default function Series() {
 
 
-  const handleRate = (id: number, rating: number) => {
+  const handleRate = (id: string, rating: number) => {
     console.log(`Série ${id} notée ${rating}`);
     // TODO: Implémenter la notation
   };

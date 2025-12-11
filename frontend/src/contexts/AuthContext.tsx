@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authAPI } from '../services/api';
 
 interface User {
   id: string;
@@ -19,6 +20,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   signup: (userData: any) => Promise<void>;
+  setAuthUser: (userData: any) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,11 +33,7 @@ export function useAuth() {
   return context;
 }
 
-interface AuthProviderProps {
-  children: React.ReactNode;
-}
-
-export function AuthProvider({ children }: AuthProviderProps) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -46,53 +44,42 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const checkAuthStatus = async () => {
     try {
-      // Vérifier le localStorage pour une session existante
-      const storedUser = localStorage.getItem('user');
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem('token');
       
-      if (storedUser && token) {
-        // Simuler la validation du token avec le backend
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setUser(JSON.parse(storedUser));
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
+
+      // Vérifier la validité du token auprès du serveur
+      const response = await authAPI.verifyToken();
+      
+      if (response.success && response.data?.user) {
+        // Token valide, mise à jour de l'utilisateur
+        setUser(response.data.user);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      } else {
+        // Token invalide ou utilisateur non trouvé
+        throw new Error('Token invalide');
       }
     } catch (error) {
-      console.error('Erreur lors de la vérification de l\'authentification:', error);
-      // Nettoyer en cas d'erreur
+      console.error('Token invalide ou expiré:', error);
+      // Nettoyer le localStorage si le token est invalide
       localStorage.removeItem('user');
-      localStorage.removeItem('authToken');
+      localStorage.removeItem('token');
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const login = async (email: string, password: string) => {
+  const login = async (_email: string, _password: string) => {
     try {
       setIsLoading(true);
       
-      // Simuler l'appel API de connexion
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Données d'utilisateur fictives (normalement reçues du backend)
-      const mockUser: User = {
-        id: 'user_' + Date.now(),
-        email,
-        birthDate: '1990-01-01', // Normalement récupéré du backend
-        age: 34,
-        preferences: {
-          genres: ['action', 'scifi', 'thriller'],
-          completedAt: '2024-01-01T00:00:00.000Z'
-        },
-        createdAt: new Date().toISOString()
-      };
-      
-      // Token fictif (normalement reçu du backend)
-      const mockToken = 'jwt_token_' + Date.now();
-      
-      // Sauvegarder dans le localStorage
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      localStorage.setItem('authToken', mockToken);
-      
-      setUser(mockUser);
+      // L'authentification est maintenant gérée directement dans Login.tsx
+      // Cette fonction est gardée pour compatibilité mais n'est plus utilisée
+      console.warn('login() appelé depuis AuthContext - utilisez la page Login à la place');
       
     } catch (error) {
       console.error('Erreur de connexion:', error);
@@ -102,29 +89,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const signup = async (userData: any) => {
+  const signup = async (_userData: any) => {
     try {
       setIsLoading(true);
       
-      // Simuler l'appel API d'inscription
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const newUser: User = {
-        id: 'user_' + Date.now(),
-        email: userData.email,
-        birthDate: userData.birthDate,
-        age: userData.age,
-        preferences: userData.preferences,
-        createdAt: new Date().toISOString()
-      };
-      
-      const mockToken = 'jwt_token_' + Date.now();
-      
-      // Sauvegarder dans le localStorage
-      localStorage.setItem('user', JSON.stringify(newUser));
-      localStorage.setItem('authToken', mockToken);
-      
-      setUser(newUser);
+      // L'inscription est maintenant gérée directement dans SignupStep2.tsx
+      // Cette fonction est gardée pour compatibilité mais n'est plus utilisée
+      console.warn('signup() appelé depuis AuthContext - utilisez la page Signup à la place');
       
     } catch (error) {
       console.error('Erreur d\'inscription:', error);
@@ -137,8 +108,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const logout = () => {
     // Nettoyer le localStorage
     localStorage.removeItem('user');
-    localStorage.removeItem('authToken');
+    localStorage.removeItem('token');
     setUser(null);
+  };
+
+  const setAuthUser = (userData: any) => {
+    setUser(userData);
   };
 
   const value: AuthContextType = {
@@ -147,7 +122,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isLoading,
     login,
     logout,
-    signup
+    signup,
+    setAuthUser
   };
 
   return (

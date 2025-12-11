@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 interface SeriesCardProps {
-  id: number;
+  id: string;
   title: string;
   image: string;
   rating: number;

@@ -1,15 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-interface MovieCardProps {
-  id: number;
-  title: string;
-  image: string;
-  rating: number;
-  duration: string;
-  year: number;
-  genre: string;
-}
+import type { MovieCardProps } from '../types/Movie';
 
 export default function MovieCard({ 
   id, 
@@ -47,7 +38,7 @@ export default function MovieCard({
         
         {/* Note en haut à gauche */}
         <div className="absolute top-2 left-2 bg-netflix-red text-white text-xs font-bold px-2 py-1 rounded">
-          ⭐ {rating.toFixed(1)}
+          ⭐ {rating}
         </div>
       </div>
 
