@@ -45,7 +45,7 @@ def insert_movies(movies):
     conn = psycopg2.connect(
         host="localhost",
         port=5432,
-        dbname="recommendation_db",
+        database="recommendation_db",
         user="admin",
         password="admin123",
     )
