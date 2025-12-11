@@ -43,9 +43,9 @@ def load_movies_from_csv():
 
 def insert_movies(movies):
     conn = psycopg2.connect(
-        host="localhost",
+        host="postgres",
         port=5432,
-        dbname="recommendation_db",
+        database="recommendation_db",
         user="admin",
         password="admin123",
     )

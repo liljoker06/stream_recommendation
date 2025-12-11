@@ -38,7 +38,7 @@ export default function MovieCard({
         
         {/* Note en haut à gauche */}
         <div className="absolute top-2 left-2 bg-netflix-red text-white text-xs font-bold px-2 py-1 rounded">
-          ⭐ {rating.toFixed(1)}
+          ⭐ {rating}
         </div>
       </div>
 

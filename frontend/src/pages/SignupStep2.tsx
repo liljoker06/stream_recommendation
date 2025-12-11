@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authAPI, contentAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { filterValidCategories } from '../utils/genres';
 
 export default function SignupStep2() {
   const navigate = useNavigate();
@@ -17,7 +18,8 @@ export default function SignupStep2() {
       try {
         const response = await contentAPI.getCategories('movie');
         if (response.success) {
-          setMovieGenres(response.data);
+          const validGenres = filterValidCategories(response.data);
+          setMovieGenres(validGenres);
         }
       } catch (error) {
         console.error('Erreur chargement genres:', error);
