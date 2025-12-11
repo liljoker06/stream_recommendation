@@ -1,23 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { authAPI } from '../services/api';
+import { authAPI, contentAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import type { Genre } from '../types';
-
-const movieGenres: Genre[] = [
-  { id: 'action', name: 'Action', description: 'Cascades, combats et aventures palpitantes', icon: '💥', color: 'from-red-500 to-orange-500' },
-  { id: 'comedy', name: 'Comédie', description: 'Humour et divertissement garantis', icon: '😂', color: 'from-yellow-500 to-orange-500' },
-  { id: 'drama', name: 'Drame', description: 'Histoires émouvantes et profondes', icon: '🎭', color: 'from-purple-500 to-pink-500' },
-  { id: 'horror', name: 'Horreur', description: 'Frissons et suspense à couper le souffle', icon: '👻', color: 'from-gray-700 to-red-900' },
-  { id: 'scifi', name: 'Science-Fiction', description: 'Futur, technologie et mondes imaginaires', icon: '🚀', color: 'from-blue-500 to-cyan-500' },
-  { id: 'fantasy', name: 'Fantasy', description: 'Magie, créatures mythiques et mondes fantastiques', icon: '🧙‍♂️', color: 'from-green-500 to-teal-500' },
-  { id: 'romance', name: 'Romance', description: 'Histoires d\'amour et relations touchantes', icon: '💕', color: 'from-pink-500 to-rose-500' },
-  { id: 'thriller', name: 'Thriller', description: 'Suspense et tension psychologique', icon: '🔍', color: 'from-indigo-500 to-purple-600' },
-  { id: 'animation', name: 'Animation', description: 'Films d\'animation pour tous les âges', icon: '🎨', color: 'from-emerald-500 to-blue-500' },
-  { id: 'documentary', name: 'Documentaire', description: 'Réalité, éducation et découverte', icon: '📽️', color: 'from-amber-600 to-yellow-600' },
-  { id: 'musical', name: 'Musical', description: 'Chansons, danses et spectacles', icon: '🎵', color: 'from-violet-500 to-purple-500' },
-  { id: 'western', name: 'Western', description: 'Far West, cowboys et aventures', icon: '🤠', color: 'from-amber-700 to-orange-700' }
-];
 
 export default function SignupStep2() {
   const navigate = useNavigate();
@@ -25,6 +9,25 @@ export default function SignupStep2() {
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [step1Data, setStep1Data] = useState<any>(null);
+  const [movieGenres, setMovieGenres] = useState<string[]>([]);
+  const [loadingGenres, setLoadingGenres] = useState(true);
+
+  useEffect(() => {
+    const loadGenres = async () => {
+      try {
+        const response = await contentAPI.getCategories('movie');
+        if (response.success) {
+          setMovieGenres(response.data);
+        }
+      } catch (error) {
+        console.error('Erreur chargement genres:', error);
+      } finally {
+        setLoadingGenres(false);
+      }
+    };
+
+    loadGenres();
+  }, []);
 
   // Rediriger si déjà connecté
   useEffect(() => {
@@ -42,11 +45,11 @@ export default function SignupStep2() {
     setStep1Data(JSON.parse(data));
   }, [navigate, isAuthenticated, authLoading]);
 
-  const toggleGenre = (genreId: string) => {
+  const toggleGenre = (genreName: string) => {
     setSelectedGenres(prev => 
-      prev.includes(genreId)
-        ? prev.filter(id => id !== genreId)
-        : [...prev, genreId]
+      prev.includes(genreName)
+        ? prev.filter(name => name !== genreName)
+        : [...prev, genreName]
     );
   };
 
@@ -107,7 +110,7 @@ export default function SignupStep2() {
     navigate('/signup');
   };
 
-  if (!step1Data) {
+  if (!step1Data || loadingGenres) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
@@ -158,7 +161,7 @@ export default function SignupStep2() {
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-semibold text-white">
-                Vos genres favoris ({selectedGenres.length}/12)
+                Vos genres favoris ({selectedGenres.length}/{movieGenres.length})
               </h3>
               {selectedGenres.length >= 3 && (
                 <div className="flex items-center text-green-400">
@@ -177,47 +180,34 @@ export default function SignupStep2() {
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
             {movieGenres.map((genre) => (
               <div
-                key={genre.id}
-                onClick={() => toggleGenre(genre.id)}
-                className={`relative p-6 rounded-xl border-2 cursor-pointer transition-all duration-300 transform hover:scale-105 ${
-                  selectedGenres.includes(genre.id)
+                key={genre}
+                onClick={() => toggleGenre(genre)}
+                className={`relative p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                  selectedGenres.includes(genre)
                     ? 'border-red-500 bg-red-500/10 shadow-lg shadow-red-500/20'
                     : 'border-gray-600 bg-gray-700/50 hover:border-gray-500'
                 }`}
               >
-                {/* Gradient background pour les genres sélectionnés */}
-                {selectedGenres.includes(genre.id) && (
-                  <div className={`absolute inset-0 bg-gradient-to-br ${genre.color} opacity-10 rounded-xl`} />
-                )}
-                
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-3xl">{genre.icon}</span>
-                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                      selectedGenres.includes(genre.id)
-                        ? 'border-red-500 bg-red-500'
-                        : 'border-gray-500'
-                    }`}>
-                      {selectedGenres.includes(genre.id) && (
-                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      )}
-                    </div>
-                  </div>
-                  <h3 className={`font-semibold text-lg mb-2 ${
-                    selectedGenres.includes(genre.id) ? 'text-white' : 'text-gray-300'
+                <div className="flex items-center justify-between">
+                  <h3 className={`font-medium text-base ${
+                    selectedGenres.includes(genre) ? 'text-white' : 'text-gray-300'
                   }`}>
-                    {genre.name}
+                    {genre}
                   </h3>
-                  <p className={`text-sm ${
-                    selectedGenres.includes(genre.id) ? 'text-gray-200' : 'text-gray-400'
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ml-2 ${
+                    selectedGenres.includes(genre)
+                      ? 'border-red-500 bg-red-500'
+                      : 'border-gray-500'
                   }`}>
-                    {genre.description}
-                  </p>
+                    {selectedGenres.includes(genre) && (
+                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -263,21 +253,15 @@ export default function SignupStep2() {
             <h3 className="text-xl font-semibold text-white mb-4">
               Aperçu de vos recommandations
             </h3>
-            <p className="text-gray-400 mb-6">
+            <p className="text-gray-400 mb-4">
               Basé sur vos genres sélectionnés, voici le type de films que nous vous recommanderons :
             </p>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {selectedGenres.slice(0, 6).map((genreId) => {
-                const genre = movieGenres.find(g => g.id === genreId);
-                return (
-                  <div key={genreId} className="text-center">
-                    <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${genre?.color} flex items-center justify-center text-2xl mb-2 mx-auto`}>
-                      {genre?.icon}
-                    </div>
-                    <p className="text-gray-300 text-sm font-medium">{genre?.name}</p>
-                  </div>
-                );
-              })}
+            <div className="flex flex-wrap gap-2">
+              {selectedGenres.map((genre) => (
+                <div key={genre} className="px-4 py-2 bg-red-600 text-white rounded-full text-sm font-medium">
+                  {genre}
+                </div>
+              ))}
             </div>
           </div>
         )}
