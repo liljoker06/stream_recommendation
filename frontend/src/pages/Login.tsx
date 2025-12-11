@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { setAuthUser } = useAuth();
+  const { setAuthUser, isAuthenticated, isLoading: authLoading } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -13,6 +13,13 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{[key: string]: string}>({});
+
+  // redirg si déjà connecté
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, authLoading, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

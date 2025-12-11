@@ -21,21 +21,26 @@ const movieGenres: Genre[] = [
 
 export default function SignupStep2() {
   const navigate = useNavigate();
-  const { setAuthUser } = useAuth();
+  const { setAuthUser, isAuthenticated, isLoading: authLoading } = useAuth();
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [step1Data, setStep1Data] = useState<any>(null);
 
+  // Rediriger si déjà connecté
   useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      navigate('/');
+      return;
+    }
+    
     // Récupérer les données de l'étape 1
     const data = localStorage.getItem('signupStep1Data');
     if (!data) {
-      // Rediriger vers l'étape 1 si aucune donnée
       navigate('/signup');
       return;
     }
     setStep1Data(JSON.parse(data));
-  }, [navigate]);
+  }, [navigate, isAuthenticated, authLoading]);
 
   const toggleGenre = (genreId: string) => {
     setSelectedGenres(prev => 
@@ -56,7 +61,6 @@ export default function SignupStep2() {
     setIsLoading(true);
     
     try {
-      // Préparer les données complètes pour l'inscription
       const userData = {
         name: step1Data.name,
         email: step1Data.email,
@@ -73,19 +77,15 @@ export default function SignupStep2() {
       const response = await authAPI.signup(userData);
       
       if (response.success && response.data) {
-        // Sauvegarder le token et les infos utilisateur
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
         
-        // Mettre à jour le contexte d'authentification
         setAuthUser(response.data.user);
         
         console.log('Inscription complète:', response.data.user);
         
-        // Nettoyer le localStorage temporaire
         localStorage.removeItem('signupStep1Data');
         
-        // Rediriger vers la page d'accueil avec un message de bienvenue
         navigate('/', { 
           state: { 
             newUser: true, 

@@ -5,4 +5,4 @@ export type {
 } from './Common';
 
 // Types de films/séries
-export type { Movie } from './Movie';
+export type { Movie, Content, ContentDetail, MovieCardProps } from './Movie';

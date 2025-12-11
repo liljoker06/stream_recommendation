@@ -8,7 +8,5 @@ router.post('/signup', signup);
 router.post('/login', login);
 router.get('/verify', verify);
 
-//==== Authentification ====//
-
 
 export default router;

@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from '../contexts/AuthContext';
 
 export default function SignupStep1() {
   const navigate = useNavigate();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     genre: "",
@@ -15,6 +17,13 @@ export default function SignupStep1() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  // redirig si déjà connecté
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, authLoading, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
