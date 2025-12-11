@@ -78,8 +78,9 @@ export const contentAPI = {
   },
 
   // recup un contenu par ID
-  getById: async (id: string | number) => {
-    const response = await api.get(`/contents/${id}`);
+  getById: async (id: string | number, autoFetchTrailer = true) => {
+    const params = autoFetchTrailer ? '?auto_fetch_trailer=true' : '';
+    const response = await api.get(`/contents/${id}${params}`);
     return response.data;
   },
 
