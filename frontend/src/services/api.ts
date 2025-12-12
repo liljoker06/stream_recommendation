@@ -109,4 +109,22 @@ export const contentAPI = {
   },
 };
 
+// ==========================================
+//  API RECOMMENDATIONS
+// ==========================================
+
+export const recommandationAPI = {
+  // Recommandation Cold Start (basée sur les préférences)
+  getForUser: async (userId: string) => {
+    const response = await api.get(`/recommandations/${userId}`);
+    return response.data;
+  },
+
+  // Recommandation automatique (Cold Start + ML plus tard)
+  getAuto: async (userId: string) => {
+    const response = await api.get(`/recommandations/${userId}?mode=auto`);
+    return response.data;
+  }
+};
+
 export default api;
