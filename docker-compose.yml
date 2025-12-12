@@ -1,9 +1,10 @@
+
 services:
   # ----------------- HADOOP -----------------
   namenode:
     image: apache/hadoop:3
-    hostname: namenode
     container_name: hadoop-namenode
+    hostname: namenode
     command: ["hdfs", "namenode"]
     env_file:
       - ./config/hadoop.env
@@ -17,8 +18,8 @@ services:
 
   datanode1:
     image: apache/hadoop:3
-    hostname: datanode1
     container_name: hadoop-datanode1
+    hostname: datanode1
     command: ["hdfs", "datanode"]
     env_file:
       - ./config/hadoop.env
@@ -29,8 +30,8 @@ services:
 
   datanode2:
     image: apache/hadoop:3
-    hostname: datanode2
     container_name: hadoop-datanode2
+    hostname: datanode2
     command: ["hdfs", "datanode"]
     env_file:
       - ./config/hadoop.env
@@ -41,8 +42,8 @@ services:
 
   datanode3:
     image: apache/hadoop:3
-    hostname: datanode3
     container_name: hadoop-datanode3
+    hostname: datanode3
     command: ["hdfs", "datanode"]
     env_file:
       - ./config/hadoop.env
@@ -53,8 +54,8 @@ services:
 
   resourcemanager:
     image: apache/hadoop:3
-    hostname: resourcemanager
     container_name: hadoop-resourcemanager
+    hostname: resourcemanager
     command: ["yarn", "resourcemanager"]
     env_file:
       - ./config/hadoop.env
@@ -65,8 +66,8 @@ services:
 
   nodemanager:
     image: apache/hadoop:3
-    hostname: nodemanager
     container_name: hadoop-nodemanager
+    hostname: nodemanager
     command: ["yarn", "nodemanager"]
     env_file:
       - ./config/hadoop.env
@@ -76,8 +77,8 @@ services:
   # ----------------- KAFKA -----------------
   kafka:
     image: apache/kafka:latest
-    hostname: kafka
     container_name: kafka
+    hostname: kafka
     ports:
       - "9092:9092"
     env_file:
@@ -120,8 +121,8 @@ services:
       - namenode
       - kafka
     environment:
-      - SPARK_MASTER_HOST=spark-master
-      - HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop
+      SPARK_MASTER_HOST: spark-master
+      HADOOP_CONF_DIR: /opt/hadoop/etc/hadoop
     ports:
       - "7077:7077"
       - "8080:8080"
@@ -135,54 +136,23 @@ services:
     depends_on:
       - spark-master
     environment:
-      - SPARK_MASTER=spark://spark-master:7077
-      - HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop
+      SPARK_MASTER: spark://spark-master:7077
+      HADOOP_CONF_DIR: /opt/hadoop/etc/hadoop
     ports:
       - "8082:8081"
     networks:
       - bigdata-net
 
-  # ----------------- HBASE + ZOOKEEPER -----------------
-  zookeeper-hb:
-    image: zookeeper:3.9
-    container_name: zookeeper-hb
-    hostname: zookeeper-hb
-    ports:
-      - "2181:2181"
-    environment:
-      ZOO_MY_ID: 1
-      ZOO_SERVERS: server.1=zookeeper-hb:2888:3888
-    networks:
-      - bigdata-net
-  
-  hbase-master:
-    image: harisekhon/hbase:latest
-    container_name: hbase-master
-    hostname: hbase-master
+  spark-streaming:
+    build: ./spark
+    container_name: spark-streaming
+    hostname: spark-streaming
     depends_on:
-      - zookeeper-hb
-    environment:
-      HBASE_MANAGES_ZK: "false"
-      ZOOKEEPER_QUORUM: zookeeper-hb
-    ports:
-      - "16010:16010"    # UI HBase Master
-      - "16000:16000"    # RPC Master
-    networks:
-      - bigdata-net
-
-  hbase-region:
-    image: harisekhon/hbase:latest
-    container_name: hbase-region
-    hostname: hbase-region
-    depends_on:
-      - hbase-master
-      - zookeeper-hb
-    environment:
-      HBASE_MANAGES_ZK: "false"
-      ZOOKEEPER_QUORUM: zookeeper-hb
-    ports:
-      - "16030:16030"    # UI RegionServer
-      - "16201:16201"    # RPC RegionServer
+      - spark-master
+      - kafka
+    volumes:
+      - ./spark/streaming_job.py:/app/spark/streaming_job.py
+    command: "/spark/bin/spark-submit --master spark://spark-master:7077 --deploy-mode client --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0 /app/spark/streaming_job.py"
     networks:
       - bigdata-net
 
@@ -190,9 +160,9 @@ services:
   postgres:
     image: postgres:15
     container_name: postgres
-    hostname: postgres 
+    hostname: postgres
     environment:
-      POSTGRES_USER: admin 
+      POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin123
       POSTGRES_DB: recommendation_db
     ports:
@@ -202,7 +172,7 @@ services:
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - bigdata-net
-  
+
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: pgadmin
@@ -217,12 +187,10 @@ services:
     networks:
       - bigdata-net
 
-  
-
 volumes:
   kafka-data:
-  spark-data:
   pgdata:
+  spark-data:
 
 networks:
   bigdata-net:

@@ -19,6 +19,9 @@ export default function MovieDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const user = localStorage.getItem("user");
+  const user_id = user ? JSON.parse(user).user_id : null;
+
   // ---------------------------------------
   // Chargement du film
   // ---------------------------------------
@@ -302,7 +305,8 @@ export default function MovieDetails() {
         )}
       </div>
 
-      <Recommandation />
+      {user_id && <Recommandation userId={user_id} />}
+
     </div>
   );
 }

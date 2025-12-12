@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
 import contentRoutes from './routes/contents.js';
 import eventsRoutes from './routes/eventsRoutes.js';
+import recommandationRoutes from './routes/recommandationRoutes.js';
 import pool from './config/database.js';
 
 dotenv.config();
@@ -50,6 +51,7 @@ app.get('/health/db', async (req, res) => {
 app.use('/api/auth', authRoutes); // route auth
 app.use('/api/contents', contentRoutes); // route contenus
 app.use('/api/events', eventsRoutes); // route events
+app.use('/api/recommandations', recommandationRoutes); // route recommandations
 
 //==Erreur 404++
 app.use((req, res) => {
