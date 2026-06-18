@@ -3,7 +3,9 @@ services:
     build: ./backend_ia
     container_name: backend_ia
     working_dir: /app
-    command: uvicorn app:app --host 0.0.0.0 --reload --port 9000
+    command: uvicorn app:app --host 0.0.0.0 --port 9000
+    environment:
+      - PYTHONPATH=/app
     ports:
       - "9000:9000"
     volumes:
