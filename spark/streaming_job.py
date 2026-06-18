@@ -4,7 +4,15 @@ from pyspark.sql.functions import col, from_json, concat_ws
 #  SPARK SESSION
 spark = (
     SparkSession.builder
-        .appName("KafkaToHDFS_CSV")
+        .appName("KafkaToMinIO_CSV")
+        # --- MinIO / S3A ---
+        .config("spark.hadoop.fs.s3a.endpoint", "http://minio:9000")
+        .config("spark.hadoop.fs.s3a.access.key", "minioadmin")
+        .config("spark.hadoop.fs.s3a.secret.key", "minioadmin")
+        .config("spark.hadoop.fs.s3a.path.style.access", "true")
+        .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
+        .config("spark.hadoop.fs.s3a.aws.credentials.provider",
+                "org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider")
         .getOrCreate()
 )
 
@@ -43,22 +51,22 @@ parsed = (
 )
 
 
-#  flatting de la structure JSON en gros on met les champs de la struct content au niveau supérieur exemple content.content_id devient content_id
+#  Flatting de la structure JSON
 flattened = (
     parsed.withColumn("content_id", col("content.content_id"))
           .withColumn("tags", concat_ws(",", col("content.tags")))
-          .drop("content")  # retire la struct JSON
+          .drop("content")
 )
 
 # ================================================================
-#  éceiture du stream dans HDFS au format CSV
+#  Écriture du stream dans MinIO (bucket silver) au format CSV
 
 query = (
     flattened.writeStream
              .format("csv")
-             .option("path", "hdfs://namenode:8020/user/events")
-             .option("checkpointLocation", "hdfs://namenode:8020/checkpoints/events")
-             .option("header", "false")   
+             .option("path", "s3a://silver/events")
+             .option("checkpointLocation", "s3a://silver/checkpoints/events")
+             .option("header", "false")
              .outputMode("append")
              .start()
 )
