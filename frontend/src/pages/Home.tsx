@@ -1,222 +1,297 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { contentAPI } from '../services/api';
+import type { Content } from '../types';
 
-export default function Home() {
+/* ── Static data (genres) ───────────────────────────── */
+const CATEGORIES = [
+  { label: "Action",         color: "#E11D48", img: "https://images.unsplash.com/photo-1508002366005-75a695ee2d17?w=300&h=170&fit=crop" },
+  { label: "Science-Fiction",color: "#6366F1", img: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=300&h=170&fit=crop" },
+  { label: "Thriller",       color: "#F59E0B", img: "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=300&h=170&fit=crop" },
+  { label: "Drame",          color: "#10B981", img: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=300&h=170&fit=crop" },
+  { label: "Horreur",        color: "#8B5CF6", img: "https://images.unsplash.com/photo-1610144591825-d5e31490f7c6?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" },
+  { label: "Comédie",        color: "#EC4899", img: "https://images.unsplash.com/photo-1569701813229-33284b643e3c?w=300&h=170&fit=crop" },
+];
+
+/* ── Skeleton cell ──────────────────────────────────── */
+function SkeletonCell({ aspect = "aspect-video" }: { aspect?: string }) {
   return (
-    <div className="min-h-screen bg-netflix-dark">
-      {/* Hero Section */}
-      <section className="relative h-[90vh] overflow-hidden">
-        <div 
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 50%, transparent 100%), url('https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=1920&h=1080&fit=crop')`
-          }}
-        />
-        
-        <div className="relative z-10 h-full flex items-center">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-            <div className="max-w-2xl">
-              <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-                Vos recommandations personnalisées
-              </h1>
-              <p className="text-xl md:text-2xl text-gray-200 mb-8 leading-relaxed">
-                Découvrez des films et séries sélectionnés spécialement pour vous grâce à notre système de recommandation intelligent.
-              </p>
-              <p className="text-lg text-gray-100 mb-10">
-                Explorez notre catalogue, ajoutez vos favoris à votre liste et profitez de suggestions personnalisées basées sur vos préférences.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link 
-                  to="/movies" 
-                  className="flex items-center justify-center gap-3 bg-netflix-red text-white px-8 py-4 text-lg font-semibold hover:bg-netflix-red-dark transition-colors duration-200 rounded"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-                  </svg>
-                  Explorer les Films
-                </Link>
-                <Link 
-                  to="/series" 
-                  className="flex items-center justify-center gap-3 bg-netflix-gray/80 text-white px-8 py-4 text-lg font-semibold hover:bg-netflix-gray transition-colors duration-200 rounded border border-netflix-gray"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  Explorer les Séries
-                </Link>
-              </div>
-            </div>
+    <div className={`${aspect} rounded-lg bg-[#1A2634] animate-pulse`} />
+  );
+}
+
+/* ── Page ───────────────────────────────────────────── */
+export default function Home() {
+  const [movies, setMovies] = useState<Content[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    contentAPI.getMovies(16).then(res => {
+      if (res.success) setMovies(res.data);
+    }).catch(() => {}).finally(() => setLoading(false));
+  }, []);
+
+  const heroMovies    = movies.slice(0, 12);
+  const featuredMovies = movies.slice(12, 16);
+
+  return (
+    <div
+      className="min-h-screen bg-black text-white"
+      style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}
+    >
+
+      {/* ════════════════════════════════════════════════
+          SECTION 1 — HERO
+          Left: mosaic grid (API) | Right: headline + CTAs
+      ════════════════════════════════════════════════ */}
+      <section className="flex flex-col lg:flex-row min-h-[92vh] items-center">
+
+        {/* Mosaic grid (left, 58%) */}
+        <div className="w-full lg:w-[58%] p-4 md:p-6 lg:p-8 order-2 lg:order-1">
+          <div className="grid grid-cols-3 gap-2">
+            {loading
+              ? Array.from({ length: 12 }).map((_, i) => <SkeletonCell key={i} />)
+              : heroMovies.map(movie => (
+                  <Link
+                    key={movie.content_id}
+                    to={`/movie/${movie.content_id}`}
+                    className="group relative overflow-hidden rounded-lg bg-[#1A2634] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E11D48]"
+                  >
+                    <div className="aspect-video">
+                      <img
+                        src={movie.metadata?.poster_url}
+                        alt={movie.title}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 opacity-90 group-hover:opacity-100"
+                        loading="lazy"
+                      />
+                    </div>
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-200" />
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <div className="w-9 h-9 rounded-full bg-white/90 flex items-center justify-center">
+                        <svg className="w-4 h-4 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                      </div>
+                    </div>
+                  </Link>
+                ))
+            }
           </div>
         </div>
-      </section>
 
-      {/* Section Comment ça marche */}
-      <section className="py-20 bg-netflix-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Comment ça marche ?
-            </h2>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              Notre système de recommandation analyse vos préférences pour vous proposer le meilleur contenu
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Étape 1 */}
-            <div className="bg-netflix-dark p-8 rounded-lg border border-netflix-gray hover:border-netflix-red transition-colors">
-              <div className="w-16 h-16 bg-netflix-red rounded-full flex items-center justify-center mb-6">
-                <span className="text-3xl font-bold text-white">1</span>
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-4">Parcourez</h3>
-              <p className="text-gray-300 text-lg">
-                Explorez notre catalogue de films et séries avec des informations détaillées : notes, durée, genre, année de sortie.
-              </p>
-            </div>
-
-            {/* Étape 2 */}
-            <div className="bg-netflix-dark p-8 rounded-lg border border-netflix-gray hover:border-netflix-red transition-colors">
-              <div className="w-16 h-16 bg-netflix-red rounded-full flex items-center justify-center mb-6">
-                <span className="text-3xl font-bold text-white">2</span>
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-4">Ajoutez à votre liste</h3>
-              <p className="text-gray-300 text-lg">
-                Créez votre liste personnalisée en ajoutant les films et séries qui vous intéressent pour les retrouver facilement.
-              </p>
-            </div>
-
-            {/* Étape 3 */}
-            <div className="bg-netflix-dark p-8 rounded-lg border border-netflix-gray hover:border-netflix-red transition-colors">
-              <div className="w-16 h-16 bg-netflix-red rounded-full flex items-center justify-center mb-6">
-                <span className="text-3xl font-bold text-white">3</span>
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-4">Recevez des recommandations</h3>
-              <p className="text-gray-300 text-lg">
-                Notre IA vous propose des suggestions personnalisées basées sur vos goûts et vos préférences de genre.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Section Catégories */}
-      <section className="py-20 bg-netflix-dark">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-12 text-center">
-            Explorez par catégorie
-          </h2>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Films */}
-            <Link 
-              to="/movies" 
-              className="group relative h-80 rounded-lg overflow-hidden"
-            >
-              <div 
-                className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
-                style={{
-                  backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.8) 100%), url('https://images.unsplash.com/photo-1489599408017-293606b66a6d?w=800&h=600&fit=crop')`
-                }}
-              />
-              <div className="relative z-10 h-full flex flex-col justify-end p-8">
-                <h3 className="text-4xl font-bold text-white mb-3">Films</h3>
-                <p className="text-lg text-gray-200 mb-4">
-                  Des milliers de films recommandés selon vos goûts
-                </p>
-                <div className="flex items-center text-netflix-red font-semibold">
-                  <span>Explorer maintenant</span>
-                  <svg className="w-6 h-6 ml-2 transform group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </div>
-              </div>
-            </Link>
-
-            {/* Séries */}
-            <Link 
-              to="/series" 
-              className="group relative h-80 rounded-lg overflow-hidden"
-            >
-              <div 
-                className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
-                style={{
-                  backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.8) 100%), url('https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?w=800&h=600&fit=crop')`
-                }}
-              />
-              <div className="relative z-10 h-full flex flex-col justify-end p-8">
-                <h3 className="text-4xl font-bold text-white mb-3">Séries</h3>
-                <p className="text-lg text-gray-200 mb-4">
-                  Des séries captivantes sélectionnées pour vous
-                </p>
-                <div className="flex items-center text-netflix-red font-semibold">
-                  <span>Explorer maintenant</span>
-                  <svg className="w-6 h-6 ml-2 transform group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </div>
-              </div>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Section Statistiques */}
-      <section className="py-20 bg-netflix-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Pourquoi nous choisir ?
-            </h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-              Des milliers d'utilisateurs font confiance à notre plateforme de recommandation
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div className="bg-netflix-dark p-6 rounded-lg border border-netflix-gray">
-              <div className="text-5xl font-bold text-netflix-red mb-2">15K+</div>
-              <div className="text-gray-300 text-lg">Films disponibles</div>
-            </div>
-            <div className="bg-netflix-dark p-6 rounded-lg border border-netflix-gray">
-              <div className="text-5xl font-bold text-netflix-red mb-2">8K+</div>
-              <div className="text-gray-300 text-lg">Séries disponibles</div>
-            </div>
-            <div className="bg-netflix-dark p-6 rounded-lg border border-netflix-gray">
-              <div className="text-5xl font-bold text-netflix-red mb-2">95%</div>
-              <div className="text-gray-300 text-lg">Précision des recommandations</div>
-            </div>
-            <div className="bg-netflix-dark p-6 rounded-lg border border-netflix-gray">
-              <div className="text-5xl font-bold text-netflix-red mb-2">50K+</div>
-              <div className="text-gray-300 text-lg">Utilisateurs actifs</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Call to Action final */}
-      <section className="py-20 bg-gradient-to-t from-netflix-red/20 to-transparent">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Prêt à découvrir votre prochain favori ?
-          </h2>
-          <p className="text-xl text-gray-300 mb-10">
-            Commencez dès maintenant à explorer nos recommandations personnalisées
+        {/* Text + CTAs (right, 42%) */}
+        <div className="w-full lg:w-[42%] px-6 md:px-10 lg:px-12 py-16 lg:py-0 order-1 lg:order-2 flex flex-col justify-center">
+          <h1 className="text-3xl md:text-4xl xl:text-5xl font-bold leading-tight mb-5">
+            Regardez des films<br />et des séries
+          </h1>
+          <p className="text-[#8197A4] text-sm md:text-base leading-relaxed mb-8 max-w-md">
+            Découvrez des milliers de films et séries recommandés par notre intelligence artificielle,
+            adaptés à vos goûts en temps réel grâce à notre pipeline Big Data.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link 
-              to="/movies" 
-              className="bg-netflix-red text-white px-10 py-4 text-lg font-semibold hover:bg-netflix-red-dark transition-colors rounded"
+
+          <div className="flex flex-col gap-3 max-w-xs">
+            <Link
+              to="/movies"
+              className="w-full text-center bg-white text-[#0F171E] px-6 py-3 text-sm font-bold hover:bg-white/90 transition-colors duration-200 rounded cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
-              Voir les Films
+              Explorer les Films
             </Link>
-            <Link 
-              to="/series" 
-              className="bg-transparent text-white px-10 py-4 text-lg font-semibold hover:bg-netflix-gray transition-colors rounded border-2 border-white"
+
+            <div className="flex items-center gap-3 my-1">
+              <div className="flex-1 h-px bg-white/15" />
+              <span className="text-[#8197A4] text-xs">ou</span>
+              <div className="flex-1 h-px bg-white/15" />
+            </div>
+
+            <Link
+              to="/series"
+              className="w-full text-center bg-transparent text-white px-6 py-3 text-sm font-semibold hover:bg-white/10 transition-colors duration-200 rounded cursor-pointer border border-white/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
-              Voir les Séries
+              Explorer les Séries
             </Link>
+          </div>
+
+          <p className="text-[#8197A4] text-xs mt-6 max-w-xs leading-relaxed">
+            Plus de 15 000 films et 8 000 séries. Recommandations personnalisées à chaque connexion.
+          </p>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════
+          SECTION 2 — CATEGORIES
+          Left: headline + desc | Right: 3×2 genre grid
+      ════════════════════════════════════════════════ */}
+      <section className="flex flex-col lg:flex-row items-center gap-8 lg:gap-0 px-6 md:px-10 lg:px-0 py-20 border-t border-white/8">
+
+        <div className="w-full lg:w-[40%] lg:pl-12 lg:pr-10 flex-shrink-0">
+          <h2 className="text-2xl md:text-3xl xl:text-4xl font-bold leading-tight mb-5">
+            Vos genres préférés<br />réunis au même endroit
+          </h2>
+          <p className="text-[#8197A4] text-sm md:text-base leading-relaxed mb-7 max-w-sm">
+            Notre IA identifie vos genres favoris à partir de vos comportements de navigation
+            et vous présente du contenu ciblé, à chaque visite.
+          </p>
+          <Link
+            to="/movies"
+            className="inline-flex items-center gap-2 text-white text-sm font-semibold hover:text-[#E11D48] transition-colors duration-200 cursor-pointer group"
+          >
+            Voir tout le catalogue
+            <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </div>
+
+        <div className="w-full lg:w-[60%] lg:pr-12">
+          <div className="grid grid-cols-3 gap-3">
+            {CATEGORIES.map(cat => (
+              <Link
+                key={cat.label}
+                to="/movies"
+                className="group relative overflow-hidden rounded-lg aspect-video cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+              >
+                <img
+                  src={cat.img}
+                  alt={cat.label}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 brightness-50 group-hover:brightness-75"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 flex flex-col justify-end p-3">
+                  <div className="w-1 h-4 rounded-full mb-1.5" style={{ backgroundColor: cat.color }} aria-hidden="true" />
+                  <span className="text-white text-xs font-bold">{cat.label}</span>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
+
+      {/* ════════════════════════════════════════════════
+          SECTION 3 — FEATURED CONTENT (API)
+          Left: text + CTA | Right: 2×2 thumbnails
+      ════════════════════════════════════════════════ */}
+      <section className="flex flex-col lg:flex-row items-center gap-8 lg:gap-0 px-6 md:px-10 lg:px-0 py-20 border-t border-white/8">
+
+        <div className="w-full lg:w-[40%] lg:pl-12 lg:pr-10 flex-shrink-0">
+          <span className="text-[#E11D48] text-xs font-semibold tracking-widest uppercase mb-3 block">
+            Sélection du moment
+          </span>
+          <h2 className="text-2xl md:text-3xl xl:text-4xl font-bold leading-tight mb-5">
+            Les titres les plus<br />regardés cette semaine
+          </h2>
+          <p className="text-[#8197A4] text-sm md:text-base leading-relaxed mb-7 max-w-sm">
+            Retrouvez les films et séries en tête des tendances,
+            mis à jour en continu grâce à notre analyse Big Data.
+          </p>
+          <Link
+            to="/movies"
+            className="inline-flex items-center gap-2.5 bg-transparent text-white border border-white/30 px-5 py-2.5 text-sm font-semibold hover:bg-white/10 transition-colors duration-200 rounded cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          >
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+            Voir les tendances
+          </Link>
+        </div>
+
+        <div className="w-full lg:w-[60%] lg:pr-12">
+          <div className="grid grid-cols-2 gap-3">
+            {loading
+              ? Array.from({ length: 4 }).map((_, i) => <SkeletonCell key={i} aspect="aspect-video" />)
+              : featuredMovies.map((movie, i) => {
+                  const badges = ["Nouveau", "4K", "Exclusif", undefined];
+                  const badge = badges[i];
+                  return (
+                    <Link
+                      key={movie.content_id}
+                      to={`/movie/${movie.content_id}`}
+                      className="group relative overflow-hidden rounded-lg cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E11D48]"
+                    >
+                      <div className="aspect-video">
+                        <img
+                          src={movie.metadata?.poster_url}
+                          alt={movie.title}
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                      {badge && (
+                        <div className="absolute top-2.5 left-2.5 bg-[#E11D48] text-white text-[10px] font-bold px-2 py-0.5 rounded">
+                          {badge}
+                        </div>
+                      )}
+                      <div className="absolute bottom-0 left-0 right-0 p-3 flex items-center justify-between">
+                        <span className="text-white text-xs font-semibold line-clamp-1">{movie.title}</span>
+                        <div className="w-7 h-7 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0 ml-2">
+                          <svg className="w-3.5 h-3.5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M8 5v14l11-7z" />
+                          </svg>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })
+            }
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════
+          SECTION 4 — FEATURES
+      ════════════════════════════════════════════════ */}
+      <section className="border-t border-white/8 px-6 md:px-12 lg:px-16 py-20">
+        <div className="max-w-5xl mx-auto grid sm:grid-cols-3 gap-10 text-center">
+          {[
+            {
+              icon: (
+                <>
+                  <circle cx="12" cy="12" r="10" strokeWidth="1.5" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9.5 8.5L15 12l-5.5 3.5v-7z" />
+                </>
+              ),
+              title: "Regardez où vous voulez",
+              desc:  "Accédez à votre catalogue depuis n'importe quel appareil connecté.",
+            },
+            {
+              icon: (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              ),
+              title: "IA en temps réel",
+              desc:  "Nos recommandations s'affinent automatiquement à chaque connexion via notre pipeline Spark.",
+            },
+            {
+              icon: (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              ),
+              title: "Économie de données",
+              desc:  "Streaming optimisé et recommandations légères pour une expérience fluide.",
+            },
+          ].map(f => (
+            <div key={f.title}>
+              <div className="w-14 h-14 rounded-full bg-[#1A2634] flex items-center justify-center mx-auto mb-5">
+                <svg className="w-6 h-6 text-[#00A8E1]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  {f.icon}
+                </svg>
+              </div>
+              <h3 className="text-white font-bold text-sm mb-2">{f.title}</h3>
+              <p className="text-[#8197A4] text-xs leading-relaxed">{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Footer */}
+      <div className="border-t border-white/8 px-6 py-8 text-center">
+        <p className="text-[#8197A4] text-xs">
+          © 2025 ReCommend — Plateforme de recommandation Big Data
+          {' · '}
+          <Link to="/movies" className="hover:text-white transition-colors duration-200 cursor-pointer">Films</Link>
+          {' · '}
+          <Link to="/series" className="hover:text-white transition-colors duration-200 cursor-pointer">Séries</Link>
+        </p>
+      </div>
+
     </div>
   );
 }

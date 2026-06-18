@@ -27,7 +27,7 @@ export default function App() {
           <Route path="/*" element={
             <ProtectedRoute>
               <Navbar />
-              <main className="flex-grow">
+              <main className="flex-grow pt-16">
                 <Routes>
                   <Route path="/" element={<Home />} />
                   <Route path="/movies" element={<Movies />} />

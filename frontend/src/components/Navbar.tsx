@@ -1,184 +1,219 @@
-import { Link } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
-  const [showUserMenu, setShowUserMenu] = useState(false);
+  const location = useLocation();
 
-  
+  const [isMobileOpen, setIsMobileOpen]   = useState(false);
+  const [showUserMenu, setShowUserMenu]   = useState(false);
+  const [isScrolled, setIsScrolled]       = useState(false);
+  const [isVisible, setIsVisible]         = useState(true);
+  const lastScrollY                        = useRef(0);
+  const userMenuRef                        = useRef<HTMLDivElement>(null);
+
+  /* ── Scroll: solid bg + hide on scroll-down ── */
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY;
+      setIsScrolled(y > 40);
+      setIsVisible(y < lastScrollY.current || y < 80);
+      lastScrollY.current = y;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  /* ── Close user menu on outside click ── */
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  /* ── Close mobile menu on route change ── */
+  useEffect(() => { setIsMobileOpen(false); }, [location.pathname]);
+
+  const isActive = (path: string) => location.pathname === path;
+
+  const navLinks = [
+    { to: '/movies', label: 'Films' },
+    { to: '/series', label: 'Séries' },
+  ];
 
   return (
-    <nav 
-      className={`fixed top-0 w-full z-50 bg-black transition-all duration-300 ${
-        isScrolled 
-          ? 'bg-netflix-black' 
-          : 'bg-gradient-to-b from-netflix-black/80 to-transparent'
-      } ${
+    <nav
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isVisible ? 'translate-y-0' : '-translate-y-full'
+      } ${
+        isScrolled
+          ? 'bg-black/95 backdrop-blur-sm border-b border-white/5'
+          : 'bg-gradient-to-b from-black/70 to-transparent'
       }`}
     >
-      <div className="container mx-auto px-6 md:px-12 max-w-7xl">
-        <div className="flex items-center justify-between h-20">
-          <Link to="/" className="flex items-center group">
-            <span className="text-3xl font-black text-netflix-red tracking-tight group-hover:text-netflix-red-dark transition-colors duration-200">
-              ReCommend
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+
+          {/* Logo */}
+          <Link
+            to="/"
+            className="flex items-center gap-2 flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-netflix-red rounded"
+          >
+            <svg className="w-6 h-6 text-netflix-red" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+            </svg>
+            <span className="text-white font-bold text-lg tracking-tight">
+              Re<span className="text-netflix-red">Commend</span>
             </span>
           </Link>
-          
-          {/* Menu Desktop */}
-          <div className="hidden lg:flex items-center gap-12">
-            <nav className="flex items-center gap-8">
-              <Link 
-                to="/movies" 
-                className="text-sm font-medium text-netflix-white hover:text-netflix-gray transition-colors duration-200 px-4 py-2"
+
+          {/* Desktop nav */}
+          <div className="hidden md:flex items-center gap-1">
+            {navLinks.map(({ to, label }) => (
+              <Link
+                key={to}
+                to={to}
+                className={`px-4 py-2 text-sm font-medium rounded transition-colors duration-200 ${
+                  isActive(to)
+                    ? 'text-white bg-white/10'
+                    : 'text-white/70 hover:text-white hover:bg-white/5'
+                }`}
               >
-                Films
+                {label}
               </Link>
-              <Link 
-                to="/series" 
-                className="text-sm font-medium text-netflix-white hover:text-netflix-gray transition-colors duration-200 px-4 py-2"
-              >
-                Séries
-              </Link>
-              <Link 
-                to="/trending" 
-                className="text-sm font-medium text-netflix-white hover:text-netflix-gray transition-colors duration-200 px-4 py-2"
-              >
-                Nouveautés
-              </Link>
-            </nav>
-            
-            {/* Authentification */}
+            ))}
+          </div>
+
+          {/* Right: user */}
+          <div className="flex items-center gap-2">
             {isAuthenticated ? (
-              <div className="relative">
+              <div className="relative" ref={userMenuRef}>
                 <button
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center gap-2 hover:opacity-80 transition-opacity duration-200"
+                  onClick={() => setShowUserMenu(v => !v)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded hover:bg-white/10 transition-colors duration-200 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                  aria-expanded={showUserMenu}
+                  aria-haspopup="true"
                 >
-                  <svg className="w-5 h-5 text-netflix-white" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                  </svg>
-                  <svg className="w-3 h-3 text-netflix-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  {/* Avatar initials */}
+                  <div className="w-7 h-7 rounded-full bg-netflix-red flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                    {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                  <span className="hidden sm:block text-white text-sm font-medium max-w-[120px] truncate">
+                    {user?.name ?? 'Mon compte'}
+                  </span>
+                  <svg
+                    className={`w-3.5 h-3.5 text-white/60 transition-transform duration-200 ${showUserMenu ? 'rotate-180' : ''}`}
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
 
-                {/* Menu utilisateur ReCommend */}
+                {/* Dropdown */}
                 {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-netflix-black border border-netflix-gray shadow-2xl">
+                  <div className="absolute right-0 top-full mt-2 w-44 bg-[#141414] border border-white/10 rounded-lg shadow-2xl overflow-hidden">
+                    <div className="px-4 py-3 border-b border-white/8">
+                      <p className="text-white text-xs font-semibold truncate">{user?.name ?? 'Utilisateur'}</p>
+                      <p className="text-white/40 text-[11px] truncate mt-0.5">{user?.email ?? ''}</p>
+                    </div>
                     <div className="py-1">
-                        <button
-                          onClick={() => {
-                            logout();
-                            setShowUserMenu(false);
-                          }}
-                          className="block w-full text-left px-4 py-2 text-sm text-netflix-white hover:bg-netflix-gray transition-colors"
-                        >
-                          Se déconnecter
-                        </button>
+                      <button
+                        onClick={() => { logout(); setShowUserMenu(false); }}
+                        className="w-full text-left px-4 py-2.5 text-sm text-white/80 hover:text-white hover:bg-white/8 transition-colors duration-200 cursor-pointer flex items-center gap-2.5"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Se déconnecter
+                      </button>
                     </div>
                   </div>
                 )}
               </div>
             ) : (
-              <div className="flex items-center gap-6">
-                <Link 
-                  to="/login" 
-                  className="text-sm font-medium text-netflix-white hover:text-netflix-gray transition-colors duration-200"
+              <div className="hidden md:flex items-center gap-2">
+                <Link
+                  to="/login"
+                  className="px-4 py-2 text-sm font-medium text-white/70 hover:text-white transition-colors duration-200"
                 >
                   S'identifier
                 </Link>
-                <Link 
-                  to="/signup" 
-                  className="px-4 py-1 text-sm font-medium text-white bg-netflix-red hover:bg-netflix-red-dark transition-colors duration-200 rounded"
+                <Link
+                  to="/signup"
+                  className="px-4 py-2 text-sm font-semibold text-white bg-netflix-red hover:bg-netflix-red-dark transition-colors duration-200 rounded"
                 >
                   S'inscrire
                 </Link>
               </div>
             )}
-          </div>
 
-          {/* Bouton menu mobile */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden p-2 hover:opacity-80 transition-opacity duration-200"
-          >
-            <svg className="w-6 h-6 text-netflix-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {isMobileMenuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
-          </button>
+            {/* Mobile hamburger */}
+            <button
+              onClick={() => setIsMobileOpen(v => !v)}
+              className="md:hidden p-2 text-white/70 hover:text-white transition-colors duration-200 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded"
+              aria-label={isMobileOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+              aria-expanded={isMobileOpen}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                {isMobileOpen
+                  ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                }
+              </svg>
+            </button>
+          </div>
         </div>
-
-          {/* Menu Mobile ReCommend */}
-        {isMobileMenuOpen && (
-          <div className="lg:hidden bg-netflix-black border-t border-netflix-gray">
-            <div className="py-4 space-y-2">
-              <Link 
-                to="/movies" 
-                className="block px-6 py-3 text-sm text-netflix-white hover:bg-netflix-gray transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Films
-              </Link>
-              <Link 
-                to="/series" 
-                className="block px-6 py-3 text-sm text-netflix-white hover:bg-netflix-gray transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Séries
-              </Link>
-              <Link 
-                to="/trending" 
-                className="block px-6 py-3 text-sm text-netflix-white hover:bg-netflix-gray transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Nouveautés
-              </Link>
-              
-              {/* Actions utilisateur mobile */}
-              {isAuthenticated ? (
-                <div className="border-t border-netflix-gray pt-2 mt-2">
-                  <button
-                    onClick={() => {
-                      logout();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="block w-full text-left px-6 py-3 text-sm text-netflix-white hover:bg-netflix-gray transition-colors"
-                  >
-                    Se déconnecter
-                  </button>
-                </div>
-              ) : (
-                <div className="border-t border-netflix-gray pt-4 mt-2 px-6 space-y-3">
-                  <Link 
-                    to="/login" 
-                    className="block w-full text-center text-sm font-medium text-netflix-white hover:text-netflix-gray transition-colors py-2"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    S'identifier
-                  </Link>
-                  <Link 
-                    to="/signup" 
-                    className="block w-full text-center px-4 py-2 text-sm font-medium text-white bg-netflix-red hover:bg-netflix-red-dark transition-colors rounded"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    S'inscrire
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Mobile menu */}
+      {isMobileOpen && (
+        <div className="md:hidden bg-black/95 backdrop-blur-sm border-t border-white/8">
+          <div className="px-4 py-3 space-y-1">
+            {navLinks.map(({ to, label }) => (
+              <Link
+                key={to}
+                to={to}
+                className={`block px-4 py-2.5 text-sm font-medium rounded transition-colors duration-200 ${
+                  isActive(to)
+                    ? 'text-white bg-white/10'
+                    : 'text-white/70 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                {label}
+              </Link>
+            ))}
+
+            {!isAuthenticated && (
+              <div className="pt-3 border-t border-white/8 flex flex-col gap-2">
+                <Link to="/login" className="block text-center py-2 text-sm text-white/70 hover:text-white transition-colors duration-200">
+                  S'identifier
+                </Link>
+                <Link to="/signup" className="block text-center py-2.5 text-sm font-semibold text-white bg-netflix-red hover:bg-netflix-red-dark transition-colors duration-200 rounded">
+                  S'inscrire
+                </Link>
+              </div>
+            )}
+
+            {isAuthenticated && (
+              <div className="pt-3 border-t border-white/8">
+                <button
+                  onClick={() => logout()}
+                  className="w-full text-left px-4 py-2.5 text-sm text-white/70 hover:text-white transition-colors duration-200 cursor-pointer"
+                >
+                  Se déconnecter
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
