@@ -1,76 +1,34 @@
 
 services:
-  # ----------------- HADOOP -----------------
-  namenode:
-    image: apache/hadoop:3
-    container_name: hadoop-namenode
-    hostname: namenode
-    command: ["hdfs", "namenode"]
-    env_file:
-      - ./config/hadoop.env
+  # ----------------- MINIO -----------------
+  minio:
+    image: minio/minio
+    container_name: minio
+    hostname: minio
+    command: server /data --console-address ":9001"
     environment:
-      ENSURE_NAMENODE_DIR: "/tmp/hadoop-root/dfs/name"
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
     ports:
-      - "9870:9870"
-      - "8020:8020"
+      - "9100:9000"   # API  (9100 hôte → évite le conflit avec backend_ia:9000)
+      - "9101:9001"   # Console MinIO
+    volumes:
+      - minio-data:/data
     networks:
       - bigdata-net
 
-  datanode1:
-    image: apache/hadoop:3
-    container_name: hadoop-datanode1
-    hostname: datanode1
-    command: ["hdfs", "datanode"]
-    env_file:
-      - ./config/hadoop.env
-    ports:
-      - "9864:9864"
-    networks:
-      - bigdata-net
-
-  datanode2:
-    image: apache/hadoop:3
-    container_name: hadoop-datanode2
-    hostname: datanode2
-    command: ["hdfs", "datanode"]
-    env_file:
-      - ./config/hadoop.env
-    ports:
-      - "9865:9864"
-    networks:
-      - bigdata-net
-
-  datanode3:
-    image: apache/hadoop:3
-    container_name: hadoop-datanode3
-    hostname: datanode3
-    command: ["hdfs", "datanode"]
-    env_file:
-      - ./config/hadoop.env
-    ports:
-      - "9866:9864"
-    networks:
-      - bigdata-net
-
-  resourcemanager:
-    image: apache/hadoop:3
-    container_name: hadoop-resourcemanager
-    hostname: resourcemanager
-    command: ["yarn", "resourcemanager"]
-    env_file:
-      - ./config/hadoop.env
-    ports:
-      - "8088:8088"
-    networks:
-      - bigdata-net
-
-  nodemanager:
-    image: apache/hadoop:3
-    container_name: hadoop-nodemanager
-    hostname: nodemanager
-    command: ["yarn", "nodemanager"]
-    env_file:
-      - ./config/hadoop.env
+  minio-init:
+    image: minio/mc
+    container_name: minio-init
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 minioadmin minioadmin; do sleep 2; done;
+      mc mb --ignore-existing local/silver;
+      mc mb --ignore-existing local/gold;
+      exit 0;
+      "
     networks:
       - bigdata-net
 
@@ -118,11 +76,9 @@ services:
     container_name: spark-master
     hostname: spark-master
     depends_on:
-      - namenode
       - kafka
     environment:
       SPARK_MASTER_HOST: spark-master
-      HADOOP_CONF_DIR: /opt/hadoop/etc/hadoop
     ports:
       - "7077:7077"
       - "8080:8080"
@@ -137,7 +93,6 @@ services:
       - spark-master
     environment:
       SPARK_MASTER: spark://spark-master:7077
-      HADOOP_CONF_DIR: /opt/hadoop/etc/hadoop
     ports:
       - "8082:8081"
     networks:
@@ -150,9 +105,15 @@ services:
     depends_on:
       - spark-master
       - kafka
+      - minio
     volumes:
       - ./spark/streaming_job.py:/app/spark/streaming_job.py
-    command: "/spark/bin/spark-submit --master spark://spark-master:7077 --deploy-mode client --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0 /app/spark/streaming_job.py"
+    command: >
+      /spark/bin/spark-submit
+      --master spark://spark-master:7077
+      --deploy-mode client
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0,org.apache.hadoop:hadoop-aws:3.3.2,com.amazonaws:aws-java-sdk-bundle:1.11.1026
+      /app/spark/streaming_job.py
     networks:
       - bigdata-net
 
@@ -190,7 +151,7 @@ services:
 volumes:
   kafka-data:
   pgdata:
-  spark-data:
+  minio-data:
 
 networks:
   bigdata-net:

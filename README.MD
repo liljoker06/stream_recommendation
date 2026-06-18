@@ -2,12 +2,12 @@
 
 Plateforme complète de recommandation **temps réel + batch** basée sur un pipeline Big Data.
 
-Ce README décrit **l’architecture réelle et finale**, conforme à ce qui a été implémenté :
+Ce README décrit **l'architecture réelle et finale**, conforme à ce qui a été implémenté :
 
-* streaming d’événements depuis le frontend
+* streaming d'événements depuis le frontend
 * ingestion Kafka
 * traitement Spark
-* stockage HDFS
+* stockage MinIO (architecture Medallion Silver / Gold)
 * entraînement IA à partir des CSV
 * exposition des recommandations via Node.js
 
@@ -23,21 +23,23 @@ Backend Node.js
 (API + Producer Kafka)
         │
         ▼
-Kafka (events)
+Kafka (events)                          ← Bronze (raw, éphémère)
         │
         ▼
 Spark Streaming
 (filtrage + enrichissement)
         │
         ▼
-HDFS (CSV événements)
+MinIO — bucket: silver                  ← Silver (CSV événements traités)
+/events/*.csv
         │
         ▼
 Backend IA (FastAPI)
-(entrainement + modèle)
+(entraînement + modèle)
         │
         ▼
-HDFS (/models/recommender)
+MinIO — bucket: gold                    ← Gold (modèle consommable)
+/models/model_current.json
         │
         ▼
 Backend Node.js
@@ -54,54 +56,59 @@ Frontend
 ### Frontend
 
 * Envoie des **événements utilisateur** (navigation, lecture, interactions)
-* Consomme l’API de recommandations
+* Consomme l'API de recommandations
 
 ### Backend Node.js
 
 * API principale
 * Authentification / contenus
 * **Producer Kafka** : envoie les événements utilisateur
-* Consomme l’API IA pour obtenir les genres pondérés
+* Consomme l'API IA pour obtenir les genres pondérés
 * Applique la logique de recommandation SQL
 
 ### Kafka
 
-* Bus d’événements temps réel
+* Bus d'événements temps réel
 * Reçoit tous les events provenant du frontend via Node.js
 
 ### Spark Streaming
 
 * Consomme Kafka
 * Filtre et normalise les événements
-* Écrit les données sous forme de **CSV** dans HDFS
+* Écrit les données sous forme de **CSV** dans MinIO (bucket `silver`)
 
-### Hadoop HDFS
+### MinIO
 
-* Stockage long terme
-* Contient :
+* Stockage objet local compatible S3
+* Remplace Hadoop HDFS
+* Deux buckets :
 
-  * CSV d’événements utilisateurs
-  * modèles IA entraînés
+  | Bucket   | Couche | Contenu                          |
+  | -------- | ------ | -------------------------------- |
+  | `silver` | Silver | CSV d'événements traités par Spark |
+  | `gold`   | Gold   | Modèle IA entraîné (JSON)        |
+
+* Console web accessible sur `http://localhost:9101`
 
 ### Backend IA (FastAPI)
 
-* Lit les CSV depuis HDFS
+* Lit les CSV depuis MinIO (`silver/events/`)
 * Entraîne un modèle simple basé sur **pondération de genres**
-* Sauvegarde le modèle dans HDFS
+* Sauvegarde le modèle dans MinIO (`gold/models/model_current.json`)
 * Expose une API de recommandation par utilisateur
 
 ---
 
-## 📁 Organisation HDFS
+## 📁 Organisation MinIO
 
 ```
-/models
-  └── recommender
-      └── model_current.json
+bucket: silver
+  └── events/
+        └── part-*.csv          ← écrits par Spark Streaming
 
-/data
-  └── events
-      └── *.csv
+bucket: gold
+  └── models/
+        └── model_current.json  ← écrit par le Backend IA
 ```
 
 ### Exemple de modèle IA
@@ -146,7 +153,7 @@ Retourne les genres préférés **ordonnés** pour un utilisateur.
 
 ⚠️ **Important** :
 
-* L’ordre = importance
+* L'ordre = importance
 * Le poids est reconstruit côté Node.js
 
 ---
@@ -154,7 +161,7 @@ Retourne les genres préférés **ordonnés** pour un utilisateur.
 ## 🎯 Logique de recommandation (Node.js)
 
 1. Appel API IA
-2. Génération des poids selon l’ordre :
+2. Génération des poids selon l'ordre :
 
 | Position | Poids |
 | -------- | ----- |
@@ -189,7 +196,7 @@ Ces événements sont :
 * envoyés par Node.js
 * streamés via Kafka
 * traités par Spark
-* stockés en CSV dans HDFS
+* stockés en CSV dans MinIO (bucket `silver`)
 
 ---
 
@@ -240,11 +247,24 @@ python insertion/insert_from_csv.py
 docker compose up -d
 ```
 
+> Démarre : MinIO, Kafka, Spark, PostgreSQL
+
 ### Stack Applicative
 
 ```bash
 docker compose -f docker-compose.dev.yml up -d
 ```
+
+> Démarre : Backend IA, Backend Node.js, Frontend
+
+### Interfaces web
+
+| Service        | URL                      | Identifiants              |
+| -------------- | ------------------------ | ------------------------- |
+| MinIO Console  | http://localhost:9101    | minioadmin / minioadmin   |
+| Kafka UI       | http://localhost:8081    | —                         |
+| Spark Master   | http://localhost:8080    | —                         |
+| pgAdmin        | http://localhost:5050    | admin@gmail.com / admin123 |
 
 ---
 
@@ -252,8 +272,9 @@ docker compose -f docker-compose.dev.yml up -d
 
 * Pipeline streaming fonctionnel
 * IA basée sur comportement réel
+* Stockage objet MinIO (Medallion Silver / Gold)
 * Pas de table `events` en PostgreSQL
-* Tout passe par Kafka → Spark → HDFS
+* Tout passe par Kafka → Spark → MinIO
 
 ---
 
@@ -263,6 +284,7 @@ docker compose -f docker-compose.dev.yml up -d
 * Modèle IA plus avancé
 * Pondération dynamique
 * Monitoring Kafka / Spark
+* Ajout couche Bronze dans MinIO (raw Kafka events)
 
 ---
 
